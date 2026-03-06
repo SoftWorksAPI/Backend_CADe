@@ -1,0 +1,23 @@
+{
+  "name": "backend_cade",
+  "version": "1.0.0",
+  "description": "Backend do CADê",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./src/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SoftWorksAPI/Backend_CADe.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SoftWorksAPI/Backend_CADe/issues"
+  },
+  "homepage": "https://github.com/SoftWorksAPI/Backend_CADe#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
