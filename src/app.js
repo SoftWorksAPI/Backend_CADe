@@ -1,14 +1,22 @@
-const express = require('express');
+const express = require('express')
+const sequelize = require('./config/database')
+const app = express()
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+app.use(express.json())
 
-app.use(express.json());
+// importa os models para o sequelize reconhecer
+require('./models/user.model')
+
+const userRoutes = require('./routes/user.routes')
+app.use('/users', userRoutes)
 
 app.get('/', (req, res) => {
-    res.json({ message: 'Hello, World!' });
-});
+  res.send('Hello World')
+})
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+// sincroniza os models com o banco ao subir
+sequelize.sync({ alter: true }).then(() => {
+  console.log('Banco sincronizado')
+})
+
+module.exports = app
