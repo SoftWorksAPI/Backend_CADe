@@ -14,7 +14,7 @@ async function authMiddleware(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
     const user = await User.findByPk(decoded.id, {
-      attributes: ['id', 'email', 'created_at'] // não retorna password_hash
+      attributes: ['id', 'name', 'email', 'is_admin', 'created_at'] // não retorna password_hash
     })
 
     if (!user) return res.status(401).json({ message: 'Usuário não encontrado' })
