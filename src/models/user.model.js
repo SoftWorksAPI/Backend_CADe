@@ -3,8 +3,8 @@ const sequelize = require('../config/database')
 
 const User = sequelize.define('User', {
   id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true,
   },
   name: {
@@ -29,7 +29,7 @@ const User = sequelize.define('User', {
   }
 }, {
   tableName:  'users',
-  timestamps: true,           // cria created_at e updated_at automaticamente
+  timestamps: true,
 })
 
 module.exports = User
