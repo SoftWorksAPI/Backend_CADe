@@ -10,13 +10,13 @@ class Startup {
             const adminExists = await User.findOne({ where: { email: process.env.ADMIN_EMAIL } })
             
             if (!adminExists) {
-            const password_hash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10)
+            const passwordHash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10)
             
             await User.create({
                 email: process.env.ADMIN_EMAIL,
                 name: 'Admin',
-                password_hash,
-                is_admin: true
+                passwordHash,
+                isAdmin: true
             })
             console.log('User Admin criado')
             }

@@ -19,11 +19,11 @@ const User = sequelize.define('User', {
       isEmail: true,
     },
   },
-  password_hash: {
+  passwordHash: {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  is_admin: {
+  isAdmin: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   }

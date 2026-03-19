@@ -8,14 +8,14 @@ class UserService {
     const alreadyExists = await User.findOne({ where: { email } })
     if (alreadyExists) throw new Error('Email já cadastrado')
 
-    const password_hash = await bcrypt.hash(password, 10)
-    const user = await User.create({ email, password_hash, name })
+    const passwordHash = await bcrypt.hash(password, 10)
+    const user = await User.create({ email, passwordHash, name })
 
     return { 
       id: user.id, 
       email: user.email, 
       name: user.name, 
-      created_at: user.created_at 
+      createdAt: user.createdAt 
     }
   }
 
@@ -23,7 +23,7 @@ class UserService {
     const user = await User.findOne({ where: { email } })
     if (!user) throw new Error('Senha ou Usuário incorretos')
 
-    const valid = await bcrypt.compare(password, user.password_hash)
+    const valid = await bcrypt.compare(password, user.passwordHash)
     if (!valid) throw new Error('Senha ou Usuário incorretos')
 
     const token = jwt.sign(
@@ -38,15 +38,15 @@ class UserService {
     const user = await User.findByPk(userId)
     if (!user) throw new Error('Usuário não encontrado')
 
-    user.is_admin = true
+    user.isAdmin = true
     await user.save()
 
     return {
       id: user.id,
       email: user.email,
       name: user.name,
-      is_admin: user.is_admin,
-      updated_at: user.updated_at
+      isAdmin: user.isAdmin,
+      updatedAt: user.updatedAt
     }
   }
 

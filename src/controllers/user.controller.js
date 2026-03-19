@@ -5,7 +5,7 @@ class UserController {
   static async register(req, res) {
     // Somente admins podem criar novos usuários
     try {
-      if (!req.user.is_admin) {
+      if (!req.user.isAdmin) {
         return res.status(403).json({ message: 'Acesso negado' })
       }
 
@@ -30,7 +30,7 @@ class UserController {
   static async promoteAdmin(req, res) {
     // Somente admins podem promover outros usuários
     try {
-      if (!req.user.is_admin) {
+      if (!req.user.isAdmin) {
         return res.status(403).json({ message: 'Acesso negado' })
       }
 
