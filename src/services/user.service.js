@@ -11,11 +11,16 @@ class UserService {
     const passwordHash = await bcrypt.hash(password, 10)
     const user = await User.create({ email, passwordHash, name })
 
-    return { 
+    const userData = { 
       id: user.id, 
       email: user.email, 
       name: user.name, 
       createdAt: user.createdAt 
+    }
+
+    return {
+      message: 'Usuário registrado com sucesso',
+      user: userData
     }
   }
 
@@ -34,20 +39,68 @@ class UserService {
     return token
   }
 
-  static async promoteAdmin(userId) {
+  static async toggleAdmin(userId) {
     const user = await User.findByPk(userId)
     if (!user) throw new Error('Usuário não encontrado')
 
-    user.isAdmin = true
+    user.isAdmin = !user.isAdmin
     await user.save()
 
-    return {
+    const userData = {
       id: user.id,
       email: user.email,
       name: user.name,
       isAdmin: user.isAdmin,
       updatedAt: user.updatedAt
     }
+
+    return {
+      message: 'Usuário atualizado com sucesso',
+      user: userData
+    }
+  }
+
+  static async delete(userId) {
+    const user = await User.findByPk(userId)
+    if (!user) throw new Error('Usuário não encontrado')
+
+    const userData = {
+      id: user.id,
+      name: user.name,
+      email: user.email
+    }
+
+    await user.destroy()
+    return { 
+      message: 'Usuário deletado com sucesso', 
+      user: userData 
+    }
+  }
+
+  static async listAll(page, limit) {
+    const offset = (page - 1) * limit
+    const { count, rows } = await User.findAndCountAll({
+      attributes: ['id', 'email', 'name', 'isAdmin', 'createdAt', 'updatedAt'],
+      offset,
+      limit,
+      order: [['createdAt', 'DESC']]
+    })
+    
+    return {
+      users: rows,
+      total: count,
+      page,
+      pages: Math.ceil(count / limit)
+    }
+  }
+
+  static async getById(id) {
+    const user = await User.findByPk(id, {
+      attributes: ['id', 'email', 'name', 'isAdmin', 'createdAt', 'updatedAt']
+    })
+    if (!user) throw new Error('Usuário não encontrado')
+
+    return user
   }
 
 }
