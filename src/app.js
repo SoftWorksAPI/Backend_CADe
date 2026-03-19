@@ -1,4 +1,5 @@
 const express = require('express')
+const Startup = require('./config/startup')
 const sequelize = require('./config/database')
 const app = express()
 
@@ -17,6 +18,11 @@ app.get('/', (req, res) => {
 // sincroniza os models com o banco ao subir
 sequelize.sync({ alter: true }).then(() => {
   console.log('Banco sincronizado')
+  try {
+    Startup.initializeAdminUser()
+  } catch (error) {
+    console.error('Erro ao inicializar admin:', error.message)
+  }
 })
 
 module.exports = app
