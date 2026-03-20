@@ -10,7 +10,7 @@ Backend do "CADê", Projeto do 4° Semestre de ADS em 2026
 2. **Instale as dependências do projeto**
    - No terminal, navegue até o diretório do projeto (se ainda não estiver lá):
      ```bash
-     cd C:\Users\Arthur\Documents\GitHub\Backend_CADe
+     cd Backend_CADe
      ```
    - Instale as dependências listadas no `package.json`:
      ```bash
