@@ -32,12 +32,17 @@ class UserController {
   static async updateUserById(req, res) {
     try {
       const { id } = req.params
+      const protectedFields = []
 
       if (!req.user.isAdmin && req.user.id.toString() !== id) {
         return res.status(403).json({ message: 'Acesso negado' })
       }
 
-      const user = await UserService.updateUserById(id, req.body)
+      if (!req.user.isAdmin) {
+        protectedFields.push('isAdmin')
+      }
+
+      const user = await UserService.updateUserById(id, req.body, protectedFields)
 
       return res.status(200).json(user)
     } catch (error) {
