@@ -29,22 +29,6 @@ class UserController {
     }
   }
 
-  //Alternar status de Admin do User
-  static async toggleAdmin(req, res) {
-    // Somente admins podem promover outros usuários
-    try {
-      if (!req.user.isAdmin) {
-        return res.status(403).json({ message: 'Acesso negado' })
-      }
-
-      const { userId } = req.params
-      const user = await UserService.toggleAdmin(userId)
-      return res.status(200).json(user)
-    } catch (error) {
-      return res.status(400).json({ message: error.message })
-    }
-  }
-
   static async updateUserById(req, res) {
     try {
       const { id } = req.params

@@ -39,27 +39,6 @@ class UserService {
     return token
   }
 
-  static async toggleAdmin(userId) {
-    const user = await User.findByPk(userId)
-    if (!user) throw new Error('Usuário não encontrado')
-
-    user.isAdmin = !user.isAdmin
-    await user.save()
-
-    const userData = {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      isAdmin: user.isAdmin,
-      updatedAt: user.updatedAt
-    }
-
-    return {
-      message: 'Usuário atualizado com sucesso',
-      user: userData
-    }
-  }
-
   static async delete(userId) {
     const user = await User.findByPk(userId)
     if (!user) throw new Error('Usuário não encontrado')
