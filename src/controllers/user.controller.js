@@ -101,7 +101,6 @@ class UserController {
   static async getById(req, res) {
     try {
       const { id } = req.params
-      console.log('ID do usuário token:', req.user.id, 'ID solicitado:', id)
 
       if (!req.user.isAdmin && req.user.id.toString() !== id) {
         return res.status(403).json({ message: 'Acesso negado' })
