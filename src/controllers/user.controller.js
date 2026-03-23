@@ -45,6 +45,21 @@ class UserController {
     }
   }
 
+  static async changePassword(req, res) {
+    try {
+      const { id, newPassword, oldPassword } = req.body
+
+      if (!req.user.isAdmin && req.user.id.toString() !== id) {
+        return res.status(403).json({ message: 'Acesso negado' })
+      }
+
+      const user = await UserService.changePassword(id, newPassword, oldPassword, req.user.isAdmin)
+
+      return res.status(200).json(user)
+    } catch (error) {
+      return res.status(400).json({ message: error.message })
+    }
+  }
   //Deletar User por ID
   static async deleteById(req, res) {
     // Somente admins podem excluir outros usuários

@@ -109,6 +109,29 @@ class UserService {
     }
   }
 
+  static async changePassword(id, newPassword, oldPassword = null, isAdmin = false) {
+    const user = await User.findByPk(id)
+    if (!user) throw new Error('Usuário não encontrado')
+
+    if (!isAdmin) {
+      const valid = await bcrypt.compare(oldPassword, user.passwordHash)
+      if (!valid) throw new Error('Senha incorreta')
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10)
+    user.passwordHash = passwordHash
+    await user.save()
+
+    const userData = {
+      id: user.id,
+      updatedAt: user.updatedAt
+    }
+
+    return {
+      message: 'Senha atualizada com sucesso',
+      user: userData
+    }
+  }
 }
 
 module.exports = UserService
