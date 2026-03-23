@@ -8,7 +8,7 @@ router.patch('/update/:id', authMiddleware, UserController.updateUserById)
 router.patch('/change-password', authMiddleware, UserController.changePassword)
 router.delete('/delete/:userId',  authMiddleware, UserController.deleteById)
 router.get('/list',      authMiddleware, UserController.listAll)
-router.get('/:id',       authMiddleware, UserController.getById)
 router.get('/me',        authMiddleware, UserController.me)
+router.get('/:id',       authMiddleware, UserController.getById)
 
 module.exports = router
