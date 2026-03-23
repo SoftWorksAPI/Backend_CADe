@@ -45,6 +45,22 @@ class UserController {
     }
   }
 
+  static async updateUserById(req, res) {
+    try {
+      const { id } = req.params
+
+      if (!req.user.isAdmin && req.user.id.toString() !== id) {
+        return res.status(403).json({ message: 'Acesso negado' })
+      }
+
+      const user = await UserService.updateUserById(id, req.body)
+
+      return res.status(200).json(user)
+    } catch (error) {
+      return res.status(400).json({ message: error.message })
+    }
+  }
+
   //Deletar User por ID
   static async deleteById(req, res) {
     // Somente admins podem excluir outros usuários
@@ -81,8 +97,9 @@ class UserController {
   static async getById(req, res) {
     try {
       const { id } = req.params
+      console.log('ID do usuário token:', req.user.id, 'ID solicitado:', id)
 
-      if (!req.user.isAdmin && req.user.id !== id) {
+      if (!req.user.isAdmin && req.user.id.toString() !== id) {
         return res.status(403).json({ message: 'Acesso negado' })
       }
 

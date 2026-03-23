@@ -103,6 +103,33 @@ class UserService {
     return user
   }
 
+  static async updateUserById(id, updates, exceptions = []) {
+    const user = await User.findByPk(id)
+    if (!user) throw new Error('Usuário não encontrado')
+    // Campos sempre protegidos
+    const protectedFields = ['id', 'email', 'createdAt', 'updatedAt', 'passwordHash', ...exceptions]
+    // Atualizar apenas os campos fornecidos que não estão na lista de exceções
+    Object.keys(updates).forEach(
+      key => {
+        if (!protectedFields.includes(key)) {
+          user[key] = updates[key]
+        }
+      }
+    )
+
+    await user.save()
+
+    const userData = {
+      id: user.id,
+      updatedAt: user.updatedAt
+    }
+
+    return {
+      message: 'Usuário atualizado com sucesso',
+      user: userData
+    }
+  }
+
 }
 
 module.exports = UserService
