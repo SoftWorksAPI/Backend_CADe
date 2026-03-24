@@ -28,7 +28,7 @@ const User = sequelize.define('User', {
     defaultValue: false,
   }
 }, {
-  tableName:  'users',
+  tableName:  'users', //cria 'createdAt', 'updatedAt'
   timestamps: true,
 })
 
