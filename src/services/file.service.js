@@ -93,8 +93,12 @@ async function deleteFile(fileId, userId, isAdmin) {
       throw new Error('Arquivo não encontrado');
     }
 
+    // Converter para número para evitar problemas de comparação de tipo
+    const fileUserIdNum = parseInt(file.userId, 10);
+    const userIdNum = parseInt(userId, 10);
+
     // Verificar permissão
-    if (file.userId !== userId && !isAdmin) {
+    if (fileUserIdNum !== userIdNum && !isAdmin) {
       throw new Error('Permissão negada');
     }
 
@@ -151,21 +155,25 @@ async function listAllFiles(page = 1, limit = 10) {
  */
 async function listFilesByUserId(userId, requestUserId, isAdmin, page = 1, limit = 10) {
   try {
+    // Converter para número para evitar problemas de comparação de tipo
+    const userIdNum = parseInt(userId, 10);
+    const requestUserIdNum = parseInt(requestUserId, 10);
+
     // Verificar se o usuário existe
-    const user = await User.findByPk(userId);
+    const user = await User.findByPk(userIdNum);
     if (!user) {
       throw new Error('Usuário não encontrado');
     }
 
     // Verificar permissão
-    if (userId !== requestUserId && !isAdmin) {
+    if (userIdNum !== requestUserIdNum && !isAdmin) {
       throw new Error('Permissão negada');
     }
 
     const offset = (page - 1) * limit;
 
     const { count, rows } = await File.findAndCountAll({
-      where: { userId },
+      where: { userId: userIdNum },
       include: {
         model: User,
         attributes: ['id', 'name', 'email'],
@@ -205,8 +213,12 @@ async function getFileById(fileId, userId, isAdmin) {
       throw new Error('Arquivo não encontrado');
     }
 
+    // Converter para número para evitar problemas de comparação de tipo
+    const fileUserIdNum = parseInt(file.userId, 10);
+    const userIdNum = parseInt(userId, 10);
+
     // Verificar permissão
-    if (file.userId !== userId && !isAdmin) {
+    if (fileUserIdNum !== userIdNum && !isAdmin) {
       throw new Error('Permissão negada');
     }
 
