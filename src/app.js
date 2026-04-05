@@ -1,8 +1,10 @@
 const express = require('express')
+const cors = require('cors')
 const Startup = require('./config/startup')
 const sequelize = require('./config/database')
 const app = express()
 
+app.use(cors())
 app.use(express.json())
 
 // importa os models para o sequelize reconhecer
