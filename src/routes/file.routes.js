@@ -43,4 +43,10 @@ router.get('/:id', authMiddleware, fileController.getFileById);
  */
 router.delete('/:id', authMiddleware, fileController.deleteFile);
 
+/**
+ * PATCH /files/:id/markdown
+ * Adicionar conteúdo markdown a um arquivo
+ */
+router.patch('/:id/markdown', authMiddleware, fileController.addMarkdown);
+
 module.exports = router;

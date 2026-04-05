@@ -145,6 +145,48 @@ async function getFileById(req, res) {
   }
 }
 
+/**
+ * Adicionar conteúdo markdown a um arquivo
+ */
+async function addMarkdown(req, res) {
+  try {
+    const { id } = req.params;
+    const { markdownContent } = req.body;
+
+    if (!markdownContent) {
+      return res.status(400).json({ message: 'Conteúdo markdown é obrigatório' });
+    }
+
+    const result = await fileService.addMarkdownToFile(
+      id,
+      req.user.id,
+      req.user.isAdmin,
+      markdownContent
+    );
+
+    return res.status(200).json({
+      message: 'Markdown adicionado com sucesso',
+      file: result,
+    });
+  } catch (err) {
+    console.error('Erro ao adicionar markdown:', err);
+
+    if (err.message === 'Arquivo não encontrado') {
+      return res.status(404).json({ message: err.message });
+    }
+
+    if (err.message === 'Permissão negada') {
+      return res.status(403).json({ message: err.message });
+    }
+
+    if (err.message.includes('vazio')) {
+      return res.status(400).json({ message: err.message });
+    }
+
+    return res.status(500).json({ message: err.message });
+  }
+}
+
 module.exports = {
   validateDXFFile,
   uploadFile,
@@ -152,4 +194,5 @@ module.exports = {
   listAllFiles,
   listFilesByUserId,
   getFileById,
+  addMarkdown,
 };

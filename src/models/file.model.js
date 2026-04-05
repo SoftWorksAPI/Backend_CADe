@@ -37,6 +37,11 @@ const File = sequelize.define('File', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  markdownContent: {
+    type: DataTypes.TEXT('long'),
+    allowNull: true,
+    comment: 'Conteúdo do arquivo markdown gerado',
+  },
 }, {
   tableName: 'files',
   timestamps: true,

@@ -228,6 +228,46 @@ async function getFileById(fileId, userId, isAdmin) {
   }
 }
 
+/**
+ * Adicionar conteúdo markdown a um arquivo
+ */
+async function addMarkdownToFile(fileId, userId, isAdmin, markdownContent) {
+  try {
+    const file = await File.findByPk(fileId);
+
+    if (!file) {
+      throw new Error('Arquivo não encontrado');
+    }
+
+    // Converter para número para evitar problemas de comparação de tipo
+    const fileUserIdNum = parseInt(file.userId, 10);
+    const userIdNum = parseInt(userId, 10);
+
+    // Verificar permissão
+    if (fileUserIdNum !== userIdNum && !isAdmin) {
+      throw new Error('Permissão negada');
+    }
+
+    // Validar conteúdo
+    if (!markdownContent || !markdownContent.trim()) {
+      throw new Error('Conteúdo markdown não pode estar vazio');
+    }
+
+    // Atualizar arquivo com conteúdo markdown
+    file.markdownContent = markdownContent;
+    await file.save();
+
+    return {
+      id: file.id,
+      originalName: file.originalName,
+      markdownContent: file.markdownContent,
+      updatedAt: file.updatedAt,
+    };
+  } catch (err) {
+    throw err;
+  }
+}
+
 module.exports = {
   saveFileToFilesystem,
   saveFileMetadataToDatabase,
@@ -236,4 +276,5 @@ module.exports = {
   listAllFiles,
   listFilesByUserId,
   getFileById,
+  addMarkdownToFile,
 };
