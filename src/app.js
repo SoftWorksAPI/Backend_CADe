@@ -7,11 +7,17 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+// Servir arquivos estáticos da pasta /uploads
+app.use('/uploads', express.static('uploads'))
+
 // importa os models para o sequelize reconhecer
 require('./models/user.model')
+require('./models/file.model')
 
 const userRoutes = require('./routes/user.routes')
+const fileRoutes = require('./routes/file.routes')
 app.use('/users', userRoutes)
+app.use('/files', fileRoutes)
 
 app.get('/', (req, res) => {
   res.send('Hello World')
