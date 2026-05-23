@@ -2,23 +2,11 @@ const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
 const User = require('./user.model')
 
-const NormFile = sequelize.define('NormFile', {
+const File = sequelize.define('File', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
-  },
-  title: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
-  category: {
-    type: DataTypes.STRING,
-    allowNull: false,
   },
   originalName: {
     type: DataTypes.STRING,
@@ -37,10 +25,6 @@ const NormFile = sequelize.define('NormFile', {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
-  fileType: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
   userId: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -49,17 +33,22 @@ const NormFile = sequelize.define('NormFile', {
       key: 'id',
     },
   },
-  ativo: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: true,
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  markdownContent: {
+    type: DataTypes.TEXT('long'),
+    allowNull: true,
+    comment: 'Conteúdo do arquivo markdown gerado',
   },
 }, {
-  tableName: 'norm_files',
+  tableName: 'files',
   timestamps: true,
   underscored: true,
 })
 
-NormFile.belongsTo(User, { foreignKey: 'userId' })
+// Definir relacionamento
+File.belongsTo(User, { foreignKey: 'userId' })
 
-module.exports = NormFile
+module.exports = File

@@ -1,21 +1,20 @@
-<<<<<<< Updated upstream
-const express = require('express');
-=======
 const express = require('express')
 const cors = require('cors')
 const swaggerJsdoc = require('swagger-jsdoc')
 const swaggerUi = require('swagger-ui-express')
 const Startup = require('./config/startup')
 const sequelize = require('./config/database')
-const app = express()
->>>>>>> Stashed changes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-<<<<<<< Updated upstream
-app.use(express.json());
-=======
+// CORS
+app.use(cors())
+
+// Body parser
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ extended: true, limit: '50mb' }))
+
 // Swagger
 const swaggerOptions = {
   definition: {
@@ -57,17 +56,11 @@ const normFileRoutes = require('./routes/normFile.routes')
 app.use('/users', userRoutes)
 app.use('/files', fileRoutes)
 app.use('/norm-files', normFileRoutes)
->>>>>>> Stashed changes
 
 app.get('/', (req, res) => {
     res.json({ message: 'Hello, World!' });
 });
 
-<<<<<<< Updated upstream
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
-=======
 // sincroniza os models com o banco ao subir (com retry)
 async function connectDatabase() {
   const delay = 5000
@@ -86,7 +79,11 @@ async function connectDatabase() {
   }
 }
 
-connectDatabase()
+connectDatabase().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Backend Node.js rodando na porta ${PORT}`)
+    console.log(`Swagger: http://localhost:${PORT}/api-docs`)
+  })
+})
 
 module.exports = app
->>>>>>> Stashed changes

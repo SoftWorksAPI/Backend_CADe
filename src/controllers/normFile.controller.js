@@ -138,10 +138,41 @@ async function getNormFileById(req, res) {
   }
 }
 
+async function toggleAtivoNormFile(req, res) {
+  try {
+    const { id } = req.params
+    const result = await normFileService.toggleAtivoNormFile(id)
+    return res.status(200).json({
+      message: `Norma ${result.ativo ? 'ativada' : 'desativada'} com sucesso`,
+      normFile: result,
+    })
+  } catch (err) {
+    console.error('Erro ao alterar status da norma:', err)
+
+    if (err.message === 'Arquivo não encontrado') {
+      return res.status(404).json({ message: err.message })
+    }
+
+    return res.status(500).json({ message: err.message })
+  }
+}
+
+async function listarNormasAtivas(req, res) {
+  try {
+    const normas = await normFileService.listarNormasAtivas()
+    return res.status(200).json({ normas })
+  } catch (err) {
+    console.error('Erro ao listar normas ativas:', err)
+    return res.status(500).json({ message: err.message })
+  }
+}
+
 module.exports = {
   uploadNormFile,
   deleteNormFile,
   listAllNormFiles,
   listNormFilesByUserId,
   getNormFileById,
+  toggleAtivoNormFile,
+  listarNormasAtivas,
 }

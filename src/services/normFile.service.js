@@ -164,6 +164,33 @@ async function getNormFileById(normFileId, userId, isAdmin) {
   return normFile
 }
 
+async function toggleAtivoNormFile(normFileId) {
+  const normFile = await NormFile.findByPk(normFileId)
+
+  if (!normFile) {
+    throw new Error('Arquivo não encontrado')
+  }
+
+  normFile.ativo = !normFile.ativo
+  await normFile.save()
+
+  return {
+    id: normFile.id,
+    title: normFile.title,
+    ativo: normFile.ativo,
+  }
+}
+
+async function listarNormasAtivas() {
+  const normFiles = await NormFile.findAll({
+    where: { ativo: true },
+    attributes: ['id', 'title', 'description', 'category', 'filePath', 'filename', 'originalName'],
+    order: [['createdAt', 'DESC']],
+  })
+
+  return normFiles
+}
+
 module.exports = {
   ALLOWED_EXTENSIONS,
   uploadNormFile,
@@ -171,4 +198,6 @@ module.exports = {
   listAllNormFiles,
   listNormFilesByUserId,
   getNormFileById,
+  toggleAtivoNormFile,
+  listarNormasAtivas,
 }
