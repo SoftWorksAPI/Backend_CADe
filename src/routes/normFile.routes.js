@@ -2,6 +2,7 @@ const express = require('express')
 const multer = require('multer')
 const normFileController = require('../controllers/normFile.controller')
 const authMiddleware = require('../middlewares/auth.middleware')
+const internalAuthMiddleware = require('../middlewares/internalAuth.middleware')
 
 const router = express.Router()
 
@@ -154,26 +155,11 @@ router.get('/user/:userId', authMiddleware, normFileController.listNormFilesByUs
  *     tags: [NormFiles]
  *     summary: Listar normas ativas (uso interno)
  *     description: Retorna todas as normas com ativo=true. Usado pelo FastAPI para sincronizar o ChromaDB.
- *     parameters:
- *       - in: header
- *         name: x-internal-api-key
- *         required: true
- *         schema:
- *           type: string
- *         description: Chave de autenticacao interna
  *     responses:
  *       200:
  *         description: Lista de normas ativas
- *       401:
- *         description: Chave de API invalida
  */
-router.get('/internal/ativas', async (req, res) => {
-  const apiKey = req.headers['x-internal-api-key']
-  if (!apiKey || apiKey !== process.env.INTERNAL_API_KEY) {
-    return res.status(401).json({ message: 'Chave de API interna invalida' })
-  }
-  return normFileController.listarNormasAtivas(req, res)
-})
+router.get('/internal/ativas', internalAuthMiddleware, normFileController.listarNormasAtivas)
 
 /**
  * @openapi

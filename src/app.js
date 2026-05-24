@@ -49,13 +49,16 @@ app.use('/uploads', express.static('uploads'))
 require('./models/user.model')
 require('./models/file.model')
 require('./models/normFile.model')
+require('./models/report.model')
 
 const userRoutes = require('./routes/user.routes')
 const fileRoutes = require('./routes/file.routes')
 const normFileRoutes = require('./routes/normFile.routes')
+const reportRoutes = require('./routes/report.routes')
 app.use('/users', userRoutes)
 app.use('/files', fileRoutes)
 app.use('/norm-files', normFileRoutes)
+app.use('/reports', reportRoutes)
 
 app.get('/', (req, res) => {
     res.json({ message: 'Hello, World!' });
