@@ -9,8 +9,6 @@ async function createReport(data) {
     userId: data.userId,
     filePath: data.filePath || null,
     fileType: data.fileType || null,
-    memorialDescritivo: data.memorialDescritivo || null,
-    dadosExtracao: data.dadosExtracao || null,
     confianca: data.confianca || null,
     numInconsistencias: data.numInconsistencias || 0,
     status: data.status || 'concluido',
