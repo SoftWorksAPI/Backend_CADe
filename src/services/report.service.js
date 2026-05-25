@@ -1,6 +1,8 @@
 const Report = require('../models/report.model')
 const File = require('../models/file.model')
 const User = require('../models/user.model')
+const fs = require('fs')
+const path = require('path')
 
 async function createReport(data) {
   const report = await Report.create({
@@ -75,6 +77,19 @@ async function deleteReport(id, userId, isAdmin) {
 
   if (reportUserIdNum !== userIdNum && !isAdmin) {
     throw new Error('Permissão negada')
+  }
+
+  // Deletar arquivo fisico se existir
+  if (report.filePath) {
+    try {
+      const filename = path.basename(report.filePath)
+      const absPath = path.join(__dirname, '../../uploads/reports', filename)
+      if (fs.existsSync(absPath)) {
+        fs.unlinkSync(absPath)
+      }
+    } catch (err) {
+      console.warn('Aviso: nao foi possivel deletar arquivo do report:', err.message)
+    }
   }
 
   await report.destroy()
