@@ -61,6 +61,11 @@ const Report = sequelize.define('Report', {
     defaultValue: 1,
     comment: 'Quantas vezes o relatorio foi revisado',
   },
+  review: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Revisao da IA sobre o relatorio gerado (Markdown)',
+  },
 }, {
   tableName: 'reports',
   timestamps: true,

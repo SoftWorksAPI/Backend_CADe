@@ -186,7 +186,7 @@ async function generatePdfReport(req, res) {
 
     // Chamar Python para gerar PDF via IA
     const timeout = req.query.timeout ? parseInt(req.query.timeout, 10) : 180000
-    const pdfBuffer = await pythonClient.generatePdf(jsonTratado, jsonCru, file.originalName, timeout)
+    const { report: pdfBuffer, review: reviewPdf } = await pythonClient.generatePdf(jsonTratado, jsonCru, file.originalName, timeout)
 
     // Salvar em uploads/reports/
     fs.mkdirSync(REPORTS_DIR, { recursive: true })
@@ -203,6 +203,7 @@ async function generatePdfReport(req, res) {
       filePath: `/uploads/reports/${baseName}_memorial.pdf`,
       fileType: 'pdf',
       status: 'concluido',
+      review: reviewPdf || null,
     })
 
     res.setHeader('Content-Type', 'application/pdf')
@@ -243,7 +244,7 @@ async function generateXlsxReport(req, res) {
 
     // Chamar Python para gerar XLSX via IA
     const timeout = req.query.timeout ? parseInt(req.query.timeout, 10) : 180000
-    const xlsxBuffer = await pythonClient.generateXlsx(jsonTratado, jsonCru, file.originalName, timeout)
+    const { report: xlsxBuffer, review: reviewXlsx } = await pythonClient.generateXlsx(jsonTratado, jsonCru, file.originalName, timeout)
 
     // Salvar em uploads/reports/
     fs.mkdirSync(REPORTS_DIR, { recursive: true })
@@ -260,6 +261,7 @@ async function generateXlsxReport(req, res) {
       filePath: `/uploads/reports/${baseName}_memorial.xlsx`,
       fileType: 'xlsx',
       status: 'concluido',
+      review: reviewXlsx || null,
     })
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -300,7 +302,7 @@ async function generateMarkdownReport(req, res) {
 
     // Chamar Python para gerar MD via IA
     const timeout = req.query.timeout ? parseInt(req.query.timeout, 10) : 180000
-    const mdBuffer = await pythonClient.generateMarkdown(jsonTratado, jsonCru, file.originalName, timeout)
+    const { report: mdBuffer, review: reviewMd } = await pythonClient.generateMarkdown(jsonTratado, jsonCru, file.originalName, timeout)
 
     // Salvar em uploads/reports/
     fs.mkdirSync(REPORTS_DIR, { recursive: true })
@@ -317,6 +319,7 @@ async function generateMarkdownReport(req, res) {
       filePath: `/uploads/reports/${baseName}_memorial.md`,
       fileType: 'md',
       status: 'concluido',
+      review: reviewMd || null,
     })
 
     res.setHeader('Content-Type', 'text/markdown; charset=utf-8')
