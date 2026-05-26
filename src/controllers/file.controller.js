@@ -78,7 +78,7 @@ async function listAllFiles(req, res) {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
-    const result = await fileService.listAllFiles(page, limit);
+    const result = await fileService.listAllFiles(page, limit, req.user.id, req.user.isAdmin);
 
     return res.status(200).json(result);
   } catch (err) {

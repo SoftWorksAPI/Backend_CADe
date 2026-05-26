@@ -142,7 +142,7 @@ async function listNormFilesByUserId(userId, requestUserId, isAdmin, page = 1, l
   }
 }
 
-async function getNormFileById(normFileId, userId, isAdmin) {
+async function getNormFileById(normFileId) {
   const normFile = await NormFile.findByPk(normFileId, {
     include: {
       model: User,
@@ -152,13 +152,6 @@ async function getNormFileById(normFileId, userId, isAdmin) {
 
   if (!normFile) {
     throw new Error('Arquivo não encontrado')
-  }
-
-  const normFileUserIdNum = parseInt(normFile.userId, 10)
-  const userIdNum = parseInt(userId, 10)
-
-  if (normFileUserIdNum !== userIdNum && !isAdmin) {
-    throw new Error('Permissão negada')
   }
 
   return normFile

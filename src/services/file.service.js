@@ -136,13 +136,19 @@ async function deleteFile(fileId, userId, isAdmin) {
 }
 
 /**
- * Listar todos os arquivos com paginação
+ * Listar todos os arquivos com paginação (Admin vê todos, usuário só vê seus)
  */
-async function listAllFiles(page = 1, limit = 10) {
+async function listAllFiles(page = 1, limit = 10, userId = null, isAdmin = false) {
   try {
     const offset = (page - 1) * limit;
 
+    const where = {};
+    if (!isAdmin && userId) {
+      where.userId = parseInt(userId, 10);
+    }
+
     const { count, rows } = await File.findAndCountAll({
+      where,
       include: {
         model: User,
         attributes: ['id', 'name', 'email'],

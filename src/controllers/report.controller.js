@@ -1,3 +1,4 @@
+const File = require('../models/file.model')
 const reportService = require('../services/report.service')
 
 async function createReport(req, res) {
@@ -8,12 +9,26 @@ async function createReport(req, res) {
       return res.status(400).json({ message: 'fileId é obrigatório' })
     }
 
-    // Se chamado via API key (FastAPI), userId pode vir no body
-    // Se chamado via JWT, userId vem do middleware
-    const userId = data.userId || (req.user && req.user.id)
+    // Se chamado via API key (FastAPI), userId vem do body e não há verificação de ownership
+    // Se chamado via JWT, userId vem do middleware e verificamos ownership
+    const isApiKey = !req.user
+    const userId = isApiKey ? data.userId : req.user.id
 
     if (!userId) {
       return res.status(400).json({ message: 'userId é obrigatório' })
+    }
+
+    // Verificar ownership apenas para chamadas via JWT (usuários autenticados)
+    if (!isApiKey && !req.user.isAdmin) {
+      const file = await File.findByPk(data.fileId)
+      if (!file) {
+        return res.status(404).json({ message: 'Arquivo não encontrado' })
+      }
+
+      const fileUserId = parseInt(file.userId, 10)
+      if (fileUserId !== parseInt(userId, 10)) {
+        return res.status(403).json({ message: 'Permissão negada: arquivo não pertence ao usuário' })
+      }
     }
 
     const report = await reportService.createReport({
