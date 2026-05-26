@@ -39,6 +39,12 @@ router.post('/:fileId/process', authMiddleware, processingController.processFile
  *         schema:
  *           type: integer
  *         description: ID do arquivo DXF
+ *       - in: query
+ *         name: timeout
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: Timeout em milissegundos (padrao 180000 = 3min)
  *     responses:
  *       200:
  *         description: PDF gerado com sucesso (binary)
@@ -61,6 +67,12 @@ router.post('/:fileId/relatorio/pdf', authMiddleware, processingController.gener
  *         schema:
  *           type: integer
  *         description: ID do arquivo DXF
+ *       - in: query
+ *         name: timeout
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: Timeout em milissegundos (padrao 180000 = 3min)
  *     responses:
  *       200:
  *         description: Markdown gerado com sucesso (text)

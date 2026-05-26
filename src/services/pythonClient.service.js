@@ -41,9 +41,10 @@ async function callPipeline(filePath, fileName, fileId = null) {
  * @param {object} memorialDescritivo - Memorial descritivo completo (JSON)
  * @param {object} dadosExtracao - Dados brutos da extracao DXF (JSON)
  * @param {string} arquivoOriginal - Nome do arquivo DXF original
+ * @param {number} timeoutMs - Timeout em milissegundos (default 180000 = 3min)
  * @returns {Promise<Buffer>} Buffer do PDF gerado
  */
-async function generatePdf(memorialDescritivo, dadosExtracao, arquivoOriginal) {
+async function generatePdf(memorialDescritivo, dadosExtracao, arquivoOriginal, timeoutMs = 180000) {
   const response = await axios.post(`${PYTHON_API_URL}/v1/relatorios/pdf`, {
     memorial_descritivo: memorialDescritivo,
     dados_extracao: dadosExtracao,
@@ -54,7 +55,7 @@ async function generatePdf(memorialDescritivo, dadosExtracao, arquivoOriginal) {
       'x-api-key': INTERNAL_API_KEY,
     },
     responseType: 'arraybuffer',
-    timeout: 180000, // 3 minutos (IA pode demorar para gerar PDF)
+    timeout: timeoutMs,
   })
 
   return Buffer.from(response.data)
@@ -65,9 +66,10 @@ async function generatePdf(memorialDescritivo, dadosExtracao, arquivoOriginal) {
  * @param {object} memorialDescritivo - Memorial descritivo completo (JSON)
  * @param {object} dadosExtracao - Dados brutos da extracao DXF (JSON)
  * @param {string} arquivoOriginal - Nome do arquivo DXF original
+ * @param {number} timeoutMs - Timeout em milissegundos (default 180000 = 3min)
  * @returns {Promise<Buffer>} Buffer do Markdown gerado
  */
-async function generateMarkdown(memorialDescritivo, dadosExtracao, arquivoOriginal) {
+async function generateMarkdown(memorialDescritivo, dadosExtracao, arquivoOriginal, timeoutMs = 180000) {
   const response = await axios.post(`${PYTHON_API_URL}/v1/relatorios/markdown`, {
     memorial_descritivo: memorialDescritivo,
     dados_extracao: dadosExtracao,
@@ -78,7 +80,7 @@ async function generateMarkdown(memorialDescritivo, dadosExtracao, arquivoOrigin
       'x-api-key': INTERNAL_API_KEY,
     },
     responseType: 'arraybuffer',
-    timeout: 180000, // 3 minutos (IA pode demorar para gerar MD)
+    timeout: timeoutMs,
   })
 
   return Buffer.from(response.data)

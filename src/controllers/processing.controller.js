@@ -185,7 +185,8 @@ async function generatePdfReport(req, res) {
     }
 
     // Chamar Python para gerar PDF via IA
-    const pdfBuffer = await pythonClient.generatePdf(jsonTratado, jsonCru, file.originalName)
+    const timeout = req.query.timeout ? parseInt(req.query.timeout, 10) : 180000
+    const pdfBuffer = await pythonClient.generatePdf(jsonTratado, jsonCru, file.originalName, timeout)
 
     // Salvar em uploads/reports/
     fs.mkdirSync(REPORTS_DIR, { recursive: true })
@@ -241,7 +242,8 @@ async function generateMarkdownReport(req, res) {
     }
 
     // Chamar Python para gerar MD via IA
-    const mdBuffer = await pythonClient.generateMarkdown(jsonTratado, jsonCru, file.originalName)
+    const timeout = req.query.timeout ? parseInt(req.query.timeout, 10) : 180000
+    const mdBuffer = await pythonClient.generateMarkdown(jsonTratado, jsonCru, file.originalName, timeout)
 
     // Salvar em uploads/reports/
     fs.mkdirSync(REPORTS_DIR, { recursive: true })
