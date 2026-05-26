@@ -1,3 +1,4 @@
+const { Op } = require('sequelize')
 const Report = require('../models/report.model')
 const File = require('../models/file.model')
 const User = require('../models/user.model')
@@ -28,14 +29,19 @@ async function listReports({ fileId, userId, isAdmin }) {
     where.fileId = fileId
   }
 
+  // Admin ve tudo. Nao-admin ve reports dos seus arquivos + seus proprios reports
   if (!isAdmin && userId) {
-    where.userId = userId
+    const userIdInt = parseInt(userId, 10)
+    where[Op.or] = [
+      { userId: userIdInt },
+      { '$File.user_id$': userIdInt }
+    ]
   }
 
   const reports = await Report.findAll({
     where,
     include: [
-      { model: File, attributes: ['id', 'originalName', 'filename'] },
+      { model: File, attributes: ['id', 'originalName', 'filename', 'userId'], required: !isAdmin && !!userId },
       { model: User, attributes: ['id', 'name', 'email'] },
     ],
     order: [['createdAt', 'DESC']],
