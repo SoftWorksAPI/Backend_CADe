@@ -42,7 +42,7 @@ async function callPipeline(filePath, fileName, fileId = null) {
  * @param {object} dadosExtracao - Dados brutos da extracao DXF (JSON)
  * @param {string} arquivoOriginal - Nome do arquivo DXF original
  * @param {number} timeoutMs - Timeout em milissegundos (default 180000 = 3min)
- * @returns {Promise<Buffer>} Buffer do PDF gerado
+ * @returns {Promise<{report: Buffer, review: string}>} Buffer do PDF + revisao da IA
  */
 async function generatePdf(memorialDescritivo, dadosExtracao, arquivoOriginal, timeoutMs = 180000) {
   const response = await axios.post(`${PYTHON_API_URL}/v1/relatorios/pdf`, {
@@ -54,11 +54,11 @@ async function generatePdf(memorialDescritivo, dadosExtracao, arquivoOriginal, t
       'Content-Type': 'application/json',
       'x-api-key': INTERNAL_API_KEY,
     },
-    responseType: 'arraybuffer',
     timeout: timeoutMs,
   })
 
-  return Buffer.from(response.data)
+  const { report: reportBase64, review } = response.data
+  return { report: Buffer.from(reportBase64, 'base64'), review }
 }
 
 /**
@@ -67,7 +67,7 @@ async function generatePdf(memorialDescritivo, dadosExtracao, arquivoOriginal, t
  * @param {object} dadosExtracao - Dados brutos da extracao DXF (JSON)
  * @param {string} arquivoOriginal - Nome do arquivo DXF original
  * @param {number} timeoutMs - Timeout em milissegundos (default 180000 = 3min)
- * @returns {Promise<Buffer>} Buffer do Markdown gerado
+ * @returns {Promise<{report: Buffer, review: string}>} Buffer do Markdown + revisao da IA
  */
 async function generateMarkdown(memorialDescritivo, dadosExtracao, arquivoOriginal, timeoutMs = 180000) {
   const response = await axios.post(`${PYTHON_API_URL}/v1/relatorios/markdown`, {
@@ -79,11 +79,36 @@ async function generateMarkdown(memorialDescritivo, dadosExtracao, arquivoOrigin
       'Content-Type': 'application/json',
       'x-api-key': INTERNAL_API_KEY,
     },
-    responseType: 'arraybuffer',
     timeout: timeoutMs,
   })
 
-  return Buffer.from(response.data)
+  const { report: reportBase64, review } = response.data
+  return { report: Buffer.from(reportBase64, 'base64'), review }
+}
+
+/**
+ * Gerar relatorio XLSX a partir de dados ja existentes
+ * @param {object} memorialDescritivo - Memorial descritivo completo (JSON)
+ * @param {object} dadosExtracao - Dados brutos da extracao DXF (JSON)
+ * @param {string} arquivoOriginal - Nome do arquivo DXF original
+ * @param {number} timeoutMs - Timeout em milissegundos (default 180000 = 3min)
+ * @returns {Promise<{report: Buffer, review: string}>} Buffer do XLSX + revisao da IA
+ */
+async function generateXlsx(memorialDescritivo, dadosExtracao, arquivoOriginal, timeoutMs = 180000) {
+  const response = await axios.post(`${PYTHON_API_URL}/v1/relatorios/xlsx`, {
+    memorial_descritivo: memorialDescritivo,
+    dados_extracao: dadosExtracao,
+    arquivo_original: arquivoOriginal,
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': INTERNAL_API_KEY,
+    },
+    timeout: timeoutMs,
+  })
+
+  const { report: reportBase64, review } = response.data
+  return { report: Buffer.from(reportBase64, 'base64'), review }
 }
 
 /**
@@ -104,5 +129,6 @@ module.exports = {
   callPipeline,
   generatePdf,
   generateMarkdown,
+  generateXlsx,
   downloadReport,
 }

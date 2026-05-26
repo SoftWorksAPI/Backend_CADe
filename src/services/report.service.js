@@ -15,6 +15,7 @@ async function createReport(data) {
     numInconsistencias: data.numInconsistencias || 0,
     status: data.status || 'concluido',
     tentativasRevisao: data.tentativasRevisao || 1,
+    review: data.review || null,
   })
 
   return report
