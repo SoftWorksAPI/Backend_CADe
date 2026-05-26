@@ -1,4 +1,5 @@
 const File = require('../models/file.model');
+const Report = require('../models/report.model');
 const User = require('../models/user.model');
 const path = require('path');
 const fs = require('fs').promises;
@@ -102,7 +103,22 @@ async function deleteFile(fileId, userId, isAdmin) {
       throw new Error('Permissão negada');
     }
 
-    // Deletar arquivo físico
+    // Deletar todos os relatórios associados (arquivos + banco)
+    const reports = await Report.findAll({ where: { fileId: parseInt(fileId, 10) } });
+    for (const report of reports) {
+      if (report.filePath) {
+        try {
+          const reportFilename = path.basename(report.filePath);
+          const reportAbsPath = path.join(__dirname, '../../uploads/reports', reportFilename);
+          await fs.unlink(reportAbsPath);
+        } catch (err) {
+          console.warn('Aviso: arquivo de relatório não encontrado:', report.filePath);
+        }
+      }
+      await report.destroy();
+    }
+
+    // Deletar arquivo DXF físico
     const filePath = path.join(__dirname, '../../uploads', file.filename);
     try {
       await fs.unlink(filePath);

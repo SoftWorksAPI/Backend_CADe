@@ -39,16 +39,6 @@ const Report = sequelize.define('Report', {
     allowNull: true,
     comment: 'Extensao do arquivo: md, pdf, docx, xlsx',
   },
-  memorialDescritivo: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    comment: 'Memorial descritivo completo em JSON',
-  },
-  dadosExtracao: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    comment: 'Dados brutos da extracao DXF',
-  },
   confianca: {
     type: DataTypes.STRING,
     allowNull: true,
