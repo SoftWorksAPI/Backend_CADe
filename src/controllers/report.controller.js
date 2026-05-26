@@ -1,5 +1,9 @@
 const File = require('../models/file.model')
 const reportService = require('../services/report.service')
+const fs = require('fs')
+const path = require('path')
+
+const REPORTS_DIR = path.join(__dirname, '../../uploads/reports')
 
 async function createReport(req, res) {
   try {
@@ -31,6 +35,37 @@ async function createReport(req, res) {
       }
     }
 
+    // Upload manual com arquivo (multipart/form-data)
+    if (req.file) {
+      if (!data.title) {
+        return res.status(400).json({ message: 'title é obrigatório para upload manual' })
+      }
+
+      fs.mkdirSync(REPORTS_DIR, { recursive: true })
+      const ts = Date.now()
+      const ext = path.extname(req.file.originalname)
+      const filename = `${parseInt(userId, 10)}_${ts}_manual${ext}`
+      const filePath = path.join(REPORTS_DIR, filename)
+      fs.writeFileSync(filePath, req.file.buffer)
+
+      const fileType = ext.replace('.', '').toLowerCase()
+
+      const report = await reportService.createReport({
+        title: data.title,
+        fileId: parseInt(data.fileId, 10),
+        userId: parseInt(userId, 10),
+        filePath: `/uploads/reports/${filename}`,
+        fileType,
+        status: 'concluido',
+      })
+
+      return res.status(201).json({
+        message: 'Relatório criado com sucesso',
+        report,
+      })
+    }
+
+    // JSON puro (comportamento atual — API key ou corpo puro)
     const report = await reportService.createReport({
       ...data,
       userId,
