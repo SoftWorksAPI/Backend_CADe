@@ -1,8 +1,11 @@
 const express = require('express')
 const router = express.Router()
+const multer = require('multer')
 const authMiddleware = require('../middlewares/auth.middleware')
 const authOrApiKeyMiddleware = require('../middlewares/authOrApiKey.middleware')
 const reportController = require('../controllers/report.controller')
+
+const upload = multer({ storage: multer.memoryStorage() })
 
 /**
  * @openapi
@@ -10,7 +13,11 @@ const reportController = require('../controllers/report.controller')
  *   post:
  *     tags: [Reports]
  *     summary: Criar relatorio
- *     description: Cria um relatorio. Usuario autenticado pode criar em seus proprios projetos; admin pode criar em qualquer projeto. Tambem aceita x-api-key para chamadas internas do Python backend.
+ *     description: |
+ *       Cria um relatorio. Aceita dois formatos:
+ *       - **application/json**: para chamadas internas (Python backend via API key) ou criacao sem upload.
+ *       - **multipart/form-data**: para upload manual de arquivo (usuario/admin via JWT).
+ *       fileId e obrigatorio em ambos os formatos.
  *     requestBody:
  *       required: true
  *       content:
@@ -29,10 +36,8 @@ const reportController = require('../controllers/report.controller')
  *                 type: string
  *               fileType:
  *                 type: string
- *               memorialDescritivo:
- *                 type: object
- *               dadosExtracao:
- *                 type: object
+ *               review:
+ *                 type: string
  *               confianca:
  *                 type: string
  *               numInconsistencias:
@@ -41,6 +46,21 @@ const reportController = require('../controllers/report.controller')
  *                 type: string
  *               tentativasRevisao:
  *                 type: integer
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file, title, fileId]
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Arquivo do relatorio (qualquer formato)
+ *               title:
+ *                 type: string
+ *                 description: Nome do relatorio
+ *               fileId:
+ *                 type: integer
+ *                 description: ID do arquivo DXF ao qual o relatorio pertence
  *     responses:
  *       201:
  *         description: Relatorio criado com sucesso
@@ -49,7 +69,7 @@ const reportController = require('../controllers/report.controller')
  *       403:
  *         description: Acesso negado
  */
-router.post('/', authOrApiKeyMiddleware, reportController.createReport)
+router.post('/', authOrApiKeyMiddleware, upload.single('file'), reportController.createReport)
 
 /**
  * @openapi
