@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const authMiddleware = require('../middlewares/auth.middleware')
-const internalAuthMiddleware = require('../middlewares/internalAuth.middleware')
+const authOrApiKeyMiddleware = require('../middlewares/authOrApiKey.middleware')
 const reportController = require('../controllers/report.controller')
 
 /**
@@ -9,8 +9,8 @@ const reportController = require('../controllers/report.controller')
  * /reports:
  *   post:
  *     tags: [Reports]
- *     summary: Criar relatorio (uso interno ou admin)
- *     description: Cria um relatorio gerado pelo FastAPI. Requer API key ou JWT admin.
+ *     summary: Criar relatorio
+ *     description: Cria um relatorio. Usuario autenticado pode criar em seus proprios projetos; admin pode criar em qualquer projeto. Tambem aceita x-api-key para chamadas internas do Python backend.
  *     requestBody:
  *       required: true
  *       content:
@@ -49,7 +49,7 @@ const reportController = require('../controllers/report.controller')
  *       403:
  *         description: Acesso negado
  */
-router.post('/', internalAuthMiddleware, reportController.createReport)
+router.post('/', authOrApiKeyMiddleware, reportController.createReport)
 
 /**
  * @openapi

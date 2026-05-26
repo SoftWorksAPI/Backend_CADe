@@ -21,6 +21,10 @@ function validateNormFile(file) {
 
 async function uploadNormFile(req, res) {
   try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Apenas administradores podem enviar normas' })
+    }
+
     validateNormFile(req.file)
 
     const { title, description, category } = req.body
@@ -120,7 +124,7 @@ async function getNormFileById(req, res) {
   try {
     const { id } = req.params
 
-    const normFile = await normFileService.getNormFileById(id, req.user.id, req.user.isAdmin)
+    const normFile = await normFileService.getNormFileById(id)
 
     return res.status(200).json(normFile)
   } catch (err) {
@@ -140,6 +144,10 @@ async function getNormFileById(req, res) {
 
 async function toggleAtivoNormFile(req, res) {
   try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Apenas administradores podem alterar status de normas' })
+    }
+
     const { id } = req.params
     const result = await normFileService.toggleAtivoNormFile(id)
     return res.status(200).json({
