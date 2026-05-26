@@ -9,14 +9,19 @@ const reportService = require('../services/report.service')
 const REPORTS_DIR = path.join(__dirname, '../../uploads/reports')
 
 /**
- * Processar arquivo DXF via pipeline Python (extracao + IA + relatorios)
- * Cria 4 registros na tabela reports: json_cru, json_tratado, md, pdf
- * Salva os arquivos em uploads/reports/
+ * Processar arquivo DXF — gera apenas os JSONs (cru + tratado)
+ * Chama Python POST /v1/extract/dxf (extração + RAG + LLM + parse)
+ * Os relatórios MD/PDF são gerados separadamente via /processing/:fileId/relatorio/pdf|markdown
  */
 async function processFile(req, res) {
+  const startTime = Date.now()
   try {
     const { fileId } = req.params
     const userId = req.user.id
+
+    console.log(`\n${'='.repeat(60)}`)
+    console.log(`[NODE] Inicio do processamento - fileId: ${fileId}`)
+    console.log(`${'='.repeat(60)}`)
 
     // 1. Buscar arquivo no BD
     const file = await File.findByPk(fileId)
@@ -31,68 +36,47 @@ async function processFile(req, res) {
       return res.status(403).json({ message: 'Permissao negada' })
     }
 
-    // 3. Chamar pipeline Python
+    // 3. Garantir que a pasta uploads/reports existe
+    fs.mkdirSync(REPORTS_DIR, { recursive: true })
+
+    const fileIntId = parseInt(fileId, 10)
+    const fileUrlBase = '/uploads/reports'
+
+    // ============================
+    // Extracao + LLM → JSONs
+    // ============================
+    console.log(`[NODE] Chamando extracao + LLM (POST /v1/extract/dxf)...`)
     const filePath = file.filePath.startsWith('/')
       ? file.filePath
       : `/${file.filePath}`
     const resultado = await pythonClient.callPipeline(
       filePath,
       file.originalName,
-      parseInt(fileId, 10)
+      fileIntId
     )
 
-    // 4. Garantir que a pasta uploads/reports existe
-    fs.mkdirSync(REPORTS_DIR, { recursive: true })
-
-    // 5. Definir base name para os arquivos
-    const fileIntId = parseInt(fileId, 10)
-    const ts = Date.now()
-    const baseName = `${fileIntId}_${ts}`
-
-    // 6. Baixar .md e .pdf do Python
-    let mdBuffer = null
-    let pdfBuffer = null
-
-    if (resultado.relatorio_md) {
-      try {
-        const mdFilename = resultado.relatorio_md.split(/[\\/]/).pop()
-        mdBuffer = await pythonClient.downloadReport(mdFilename)
-      } catch (err) {
-        console.warn('Aviso: nao foi possivel baixar o .md:', err.message)
-      }
+    if (!resultado.sucesso) {
+      console.log(`[NODE] ERRO na extracao: ${resultado.erro}`)
+      return res.status(422).json({ message: resultado.erro || 'Erro na extracao do DXF' })
     }
-
-    if (resultado.relatorio_pdf) {
-      try {
-        const pdfFilename = resultado.relatorio_pdf.split(/[\\/]/).pop()
-        pdfBuffer = await pythonClient.downloadReport(pdfFilename)
-      } catch (err) {
-        console.warn('Aviso: nao foi possivel baixar o .pdf:', err.message)
-      }
-    }
-
-    // 7. Salvar 4 arquivos em uploads/reports/
-    const jsonCruPath = path.join(REPORTS_DIR, `${baseName}_json_cru.json`)
-    const jsonTratadoPath = path.join(REPORTS_DIR, `${baseName}_json_tratado.json`)
-    const mdPath = path.join(REPORTS_DIR, `${baseName}_memorial.md`)
-    const pdfPath = path.join(REPORTS_DIR, `${baseName}_memorial.pdf`)
 
     const dadosExtracao = resultado.dados_extracao || {}
     const memorialDescritivo = resultado.memorial_descritivo || {}
-
-    fs.writeFileSync(jsonCruPath, JSON.stringify(dadosExtracao, null, 2), 'utf-8')
-    fs.writeFileSync(jsonTratadoPath, JSON.stringify(memorialDescritivo, null, 2), 'utf-8')
-    if (mdBuffer) fs.writeFileSync(mdPath, mdBuffer)
-    if (pdfBuffer) fs.writeFileSync(pdfPath, pdfBuffer)
-
-    // 8. Criar 4 registros Report no BD
-    const fileUrlBase = '/uploads/reports'
-    const status = resultado.sucesso ? 'concluido' : 'erro'
-    const tentativas = resultado.revisao?.tentativas || 1
     const confianca = resultado.confianca || null
     const numInconsistencias = resultado.num_inconsistencias || 0
 
-    const reportJsonCru = await reportService.createReport({
+    // Salvar JSONs em disco
+    const ts = Date.now()
+    const baseName = `${fileIntId}_${ts}`
+
+    const jsonCruPath = path.join(REPORTS_DIR, `${baseName}_json_cru.json`)
+    const jsonTratadoPath = path.join(REPORTS_DIR, `${baseName}_json_tratado.json`)
+    fs.writeFileSync(jsonCruPath, JSON.stringify(dadosExtracao, null, 2), 'utf-8')
+    fs.writeFileSync(jsonTratadoPath, JSON.stringify(memorialDescritivo, null, 2), 'utf-8')
+    console.log(`[NODE] JSONs salvos: ${baseName}_json_cru.json, ${baseName}_json_tratado.json`)
+
+    // Criar Reports de JSON
+    await reportService.createReport({
       title: `JSON Cru - ${file.originalName}`,
       fileId: fileIntId,
       userId: requestUserId,
@@ -100,11 +84,10 @@ async function processFile(req, res) {
       fileType: 'json',
       confianca,
       numInconsistencias,
-      status,
-      tentativasRevisao: tentativas,
+      status: 'concluido',
     })
 
-    const reportJsonTratado = await reportService.createReport({
+    await reportService.createReport({
       title: `JSON Tratado - ${file.originalName}`,
       fileId: fileIntId,
       userId: requestUserId,
@@ -112,66 +95,70 @@ async function processFile(req, res) {
       fileType: 'json',
       confianca,
       numInconsistencias,
-      status,
-      tentativasRevisao: tentativas,
+      status: 'concluido',
     })
 
-    const reportMd = await reportService.createReport({
-      title: `Memorial Markdown - ${file.originalName}`,
-      fileId: fileIntId,
-      userId: requestUserId,
-      filePath: `${fileUrlBase}/${baseName}_memorial.md`,
-      fileType: 'md',
-      confianca,
-      numInconsistencias,
-      status,
-      tentativasRevisao: tentativas,
-    })
-
-    const reportPdf = await reportService.createReport({
-      title: `Memorial PDF - ${file.originalName}`,
-      fileId: fileIntId,
-      userId: requestUserId,
-      filePath: `${fileUrlBase}/${baseName}_memorial.pdf`,
-      fileType: 'pdf',
-      confianca,
-      numInconsistencias,
-      status,
-      tentativasRevisao: tentativas,
-    })
-
-    // 9. Atualizar markdownContent no File
-    if (mdBuffer) {
-      try {
-        file.markdownContent = mdBuffer.toString('utf-8')
-        await file.save()
-      } catch (err) {
-        console.warn('Aviso: nao foi possivel atualizar markdownContent:', err.message)
-      }
+    // Atualizar markdownContent no File com o JSON tratado (memorial)
+    try {
+      file.markdownContent = JSON.stringify(memorialDescritivo, null, 2)
+      await file.save()
+    } catch (err) {
+      console.warn('Aviso: nao foi possivel atualizar markdownContent:', err.message)
     }
 
-    // 10. Retornar resultado
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
+    console.log(`[NODE] Processamento concluido em ${elapsed}s - 2 Reports criados\n`)
+
     return res.status(200).json({
       message: 'Arquivo processado com sucesso',
-      sucesso: resultado.sucesso,
+      sucesso: true,
       reports: {
-        json_cru: { id: reportJsonCru.id, filePath: reportJsonCru.filePath },
-        json_tratado: { id: reportJsonTratado.id, filePath: reportJsonTratado.filePath },
-        md: { id: reportMd.id, filePath: reportMd.filePath },
-        pdf: { id: reportPdf.id, filePath: reportPdf.filePath },
+        json_cru: { filePath: `${fileUrlBase}/${baseName}_json_cru.json` },
+        json_tratado: { filePath: `${fileUrlBase}/${baseName}_json_tratado.json` },
       },
-      confianca: resultado.confianca,
-      num_inconsistencias: resultado.num_inconsistencias,
-      revisao: resultado.revisao,
+      confianca,
+      num_inconsistencias: numInconsistencias,
     })
   } catch (err) {
-    console.error('Erro ao processar arquivo:', err)
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
+    console.error(`[NODE] ERRO apos ${elapsed}s:`, err.message)
     return res.status(500).json({ message: err.message })
   }
 }
 
 /**
- * Servir relatorio PDF ja gerado para um arquivo processado
+ * Helper: buscar jsons do disco para um fileId
+ */
+async function _getJsonsFromDisk(fileId) {
+  const jsonReports = await Report.findAll({
+    where: { fileId: parseInt(fileId, 10), fileType: 'json' },
+    order: [['createdAt', 'DESC']],
+  })
+
+  let jsonCru = null
+  let jsonTratado = null
+
+  for (const report of jsonReports) {
+    if (!report.filePath) continue
+    const filename = path.basename(report.filePath)
+    const absPath = path.join(REPORTS_DIR, filename)
+    if (!fs.existsSync(absPath)) continue
+
+    const content = fs.readFileSync(absPath, 'utf-8')
+    const parsed = JSON.parse(content)
+
+    if (filename.includes('json_cru')) {
+      jsonCru = parsed
+    } else if (filename.includes('json_tratado')) {
+      jsonTratado = parsed
+    }
+  }
+
+  return { jsonCru, jsonTratado }
+}
+
+/**
+ * Gerar relatorio PDF via IA para um arquivo ja processado
  */
 async function generatePdfReport(req, res) {
   try {
@@ -189,34 +176,45 @@ async function generatePdfReport(req, res) {
       return res.status(403).json({ message: 'Permissao negada' })
     }
 
-    const report = await Report.findOne({
-      where: { fileId: parseInt(fileId, 10), fileType: 'pdf' },
-      order: [['createdAt', 'DESC']],
-    })
-
-    if (!report || !report.filePath) {
+    // Buscar JSONs do disco
+    const { jsonCru, jsonTratado } = await _getJsonsFromDisk(fileId)
+    if (!jsonCru || !jsonTratado) {
       return res.status(404).json({
-        message: 'Nenhum PDF encontrado para este arquivo. Execute o processamento primeiro.',
+        message: 'JSONs de extracao nao encontrados. Execute a pipeline principal primeiro via POST /processing/:fileId/process',
       })
     }
 
-    const filename = path.basename(report.filePath)
-    const absPath = path.join(REPORTS_DIR, filename)
-    if (!fs.existsSync(absPath)) {
-      return res.status(404).json({ message: 'Arquivo PDF nao encontrado no disco' })
-    }
+    // Chamar Python para gerar PDF via IA
+    const pdfBuffer = await pythonClient.generatePdf(jsonTratado, jsonCru, file.originalName)
+
+    // Salvar em uploads/reports/
+    fs.mkdirSync(REPORTS_DIR, { recursive: true })
+    const ts = Date.now()
+    const baseName = `${parseInt(fileId, 10)}_${ts}`
+    const pdfPath = path.join(REPORTS_DIR, `${baseName}_memorial.pdf`)
+    fs.writeFileSync(pdfPath, pdfBuffer)
+
+    // Criar Report no BD
+    await reportService.createReport({
+      title: `Memorial PDF - ${file.originalName}`,
+      fileId: parseInt(fileId, 10),
+      userId: requestUserId,
+      filePath: `/uploads/reports/${baseName}_memorial.pdf`,
+      fileType: 'pdf',
+      status: 'concluido',
+    })
 
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `attachment; filename="${file.originalName.replace('.dxf', '')}_memorial.pdf"`)
-    return res.sendFile(absPath)
+    return res.send(pdfBuffer)
   } catch (err) {
-    console.error('Erro ao servir PDF:', err)
+    console.error('Erro ao gerar PDF:', err)
     return res.status(500).json({ message: err.message })
   }
 }
 
 /**
- * Servir relatorio Markdown ja gerado para um arquivo processado
+ * Gerar relatorio Markdown via IA para um arquivo ja processado
  */
 async function generateMarkdownReport(req, res) {
   try {
@@ -234,28 +232,39 @@ async function generateMarkdownReport(req, res) {
       return res.status(403).json({ message: 'Permissao negada' })
     }
 
-    const report = await Report.findOne({
-      where: { fileId: parseInt(fileId, 10), fileType: 'md' },
-      order: [['createdAt', 'DESC']],
-    })
-
-    if (!report || !report.filePath) {
+    // Buscar JSONs do disco
+    const { jsonCru, jsonTratado } = await _getJsonsFromDisk(fileId)
+    if (!jsonCru || !jsonTratado) {
       return res.status(404).json({
-        message: 'Nenhum Markdown encontrado para este arquivo. Execute o processamento primeiro.',
+        message: 'JSONs de extracao nao encontrados. Execute a pipeline principal primeiro via POST /processing/:fileId/process',
       })
     }
 
-    const filename = path.basename(report.filePath)
-    const absPath = path.join(REPORTS_DIR, filename)
-    if (!fs.existsSync(absPath)) {
-      return res.status(404).json({ message: 'Arquivo Markdown nao encontrado no disco' })
-    }
+    // Chamar Python para gerar MD via IA
+    const mdBuffer = await pythonClient.generateMarkdown(jsonTratado, jsonCru, file.originalName)
+
+    // Salvar em uploads/reports/
+    fs.mkdirSync(REPORTS_DIR, { recursive: true })
+    const ts = Date.now()
+    const baseName = `${parseInt(fileId, 10)}_${ts}`
+    const mdPath = path.join(REPORTS_DIR, `${baseName}_memorial.md`)
+    fs.writeFileSync(mdPath, mdBuffer)
+
+    // Criar Report no BD
+    await reportService.createReport({
+      title: `Memorial Markdown - ${file.originalName}`,
+      fileId: parseInt(fileId, 10),
+      userId: requestUserId,
+      filePath: `/uploads/reports/${baseName}_memorial.md`,
+      fileType: 'md',
+      status: 'concluido',
+    })
 
     res.setHeader('Content-Type', 'text/markdown; charset=utf-8')
     res.setHeader('Content-Disposition', `attachment; filename="${file.originalName.replace('.dxf', '')}_memorial.md"`)
-    return res.sendFile(absPath)
+    return res.send(mdBuffer)
   } catch (err) {
-    console.error('Erro ao servir Markdown:', err)
+    console.error('Erro ao gerar Markdown:', err)
     return res.status(500).json({ message: err.message })
   }
 }

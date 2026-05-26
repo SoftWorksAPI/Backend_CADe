@@ -30,7 +30,7 @@ async function callPipeline(filePath, fileName, fileId = null) {
     },
     maxContentLength: Infinity,
     maxBodyLength: Infinity,
-    timeout: 300000, // 5 minutos (pipeline com IA pode demorar)
+    timeout: 180000, // 3 minutos (extracao + RAG + LLM)
   })
 
   return response.data
@@ -54,7 +54,7 @@ async function generatePdf(memorialDescritivo, dadosExtracao, arquivoOriginal) {
       'x-api-key': INTERNAL_API_KEY,
     },
     responseType: 'arraybuffer',
-    timeout: 60000,
+    timeout: 180000, // 3 minutos (IA pode demorar para gerar PDF)
   })
 
   return Buffer.from(response.data)
@@ -78,7 +78,7 @@ async function generateMarkdown(memorialDescritivo, dadosExtracao, arquivoOrigin
       'x-api-key': INTERNAL_API_KEY,
     },
     responseType: 'arraybuffer',
-    timeout: 60000,
+    timeout: 180000, // 3 minutos (IA pode demorar para gerar MD)
   })
 
   return Buffer.from(response.data)
