@@ -215,6 +215,63 @@ async function generatePdfReport(req, res) {
 }
 
 /**
+ * Gerar relatorio XLSX via IA para um arquivo ja processado
+ */
+async function generateXlsxReport(req, res) {
+  try {
+    const { fileId } = req.params
+    const userId = req.user.id
+
+    const file = await File.findByPk(fileId)
+    if (!file) {
+      return res.status(404).json({ message: 'Arquivo nao encontrado' })
+    }
+
+    const fileUserId = parseInt(file.userId, 10)
+    const requestUserId = parseInt(userId, 10)
+    if (fileUserId !== requestUserId && !req.user.isAdmin) {
+      return res.status(403).json({ message: 'Permissao negada' })
+    }
+
+    // Buscar JSONs do disco
+    const { jsonCru, jsonTratado } = await _getJsonsFromDisk(fileId)
+    if (!jsonCru || !jsonTratado) {
+      return res.status(404).json({
+        message: 'JSONs de extracao nao encontrados. Execute a pipeline principal primeiro via POST /processing/:fileId/process',
+      })
+    }
+
+    // Chamar Python para gerar XLSX via IA
+    const timeout = req.query.timeout ? parseInt(req.query.timeout, 10) : 180000
+    const xlsxBuffer = await pythonClient.generateXlsx(jsonTratado, jsonCru, file.originalName, timeout)
+
+    // Salvar em uploads/reports/
+    fs.mkdirSync(REPORTS_DIR, { recursive: true })
+    const ts = Date.now()
+    const baseName = `${parseInt(fileId, 10)}_${ts}`
+    const xlsxPath = path.join(REPORTS_DIR, `${baseName}_memorial.xlsx`)
+    fs.writeFileSync(xlsxPath, xlsxBuffer)
+
+    // Criar Report no BD
+    await reportService.createReport({
+      title: `Memorial XLSX - ${file.originalName}`,
+      fileId: parseInt(fileId, 10),
+      userId: requestUserId,
+      filePath: `/uploads/reports/${baseName}_memorial.xlsx`,
+      fileType: 'xlsx',
+      status: 'concluido',
+    })
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    res.setHeader('Content-Disposition', `attachment; filename="${file.originalName.replace('.dxf', '')}_memorial.xlsx"`)
+    return res.send(xlsxBuffer)
+  } catch (err) {
+    console.error('Erro ao gerar XLSX:', err)
+    return res.status(500).json({ message: err.message })
+  }
+}
+
+/**
  * Gerar relatorio Markdown via IA para um arquivo ja processado
  */
 async function generateMarkdownReport(req, res) {
@@ -275,4 +332,5 @@ module.exports = {
   processFile,
   generatePdfReport,
   generateMarkdownReport,
+  generateXlsxReport,
 }

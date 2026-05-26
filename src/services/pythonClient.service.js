@@ -87,6 +87,31 @@ async function generateMarkdown(memorialDescritivo, dadosExtracao, arquivoOrigin
 }
 
 /**
+ * Gerar relatorio XLSX a partir de dados ja existentes
+ * @param {object} memorialDescritivo - Memorial descritivo completo (JSON)
+ * @param {object} dadosExtracao - Dados brutos da extracao DXF (JSON)
+ * @param {string} arquivoOriginal - Nome do arquivo DXF original
+ * @param {number} timeoutMs - Timeout em milissegundos (default 180000 = 3min)
+ * @returns {Promise<Buffer>} Buffer do XLSX gerado
+ */
+async function generateXlsx(memorialDescritivo, dadosExtracao, arquivoOriginal, timeoutMs = 180000) {
+  const response = await axios.post(`${PYTHON_API_URL}/v1/relatorios/xlsx`, {
+    memorial_descritivo: memorialDescritivo,
+    dados_extracao: dadosExtracao,
+    arquivo_original: arquivoOriginal,
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': INTERNAL_API_KEY,
+    },
+    responseType: 'arraybuffer',
+    timeout: timeoutMs,
+  })
+
+  return Buffer.from(response.data)
+}
+
+/**
  * Baixar um relatorio gerado do Python
  * @param {string} filename - Nome do arquivo no servidor Python
  * @returns {Promise<Buffer>} Buffer do arquivo
@@ -104,5 +129,6 @@ module.exports = {
   callPipeline,
   generatePdf,
   generateMarkdown,
+  generateXlsx,
   downloadReport,
 }

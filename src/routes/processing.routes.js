@@ -81,4 +81,32 @@ router.post('/:fileId/relatorio/pdf', authMiddleware, processingController.gener
  */
 router.post('/:fileId/relatorio/markdown', authMiddleware, processingController.generateMarkdownReport)
 
+/**
+ * @openapi
+ * /processing/{fileId}/relatorio/xlsx:
+ *   post:
+ *     tags: [Processing]
+ *     summary: Gerar relatorio XLSX
+ *     description: Gera um relatorio XLSX (memorial descritivo) a partir do memorial descritivo ja existente no banco de dados. Requer que o arquivo tenha sido processado antes.
+ *     parameters:
+ *       - in: path
+ *         name: fileId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID do arquivo DXF
+ *       - in: query
+ *         name: timeout
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: Timeout em milissegundos (padrao 180000 = 3min)
+ *     responses:
+ *       200:
+ *         description: XLSX gerado com sucesso (binary)
+ *       404:
+ *         description: Arquivo ou relatorio nao encontrado
+ */
+router.post('/:fileId/relatorio/xlsx', authMiddleware, processingController.generateXlsxReport)
+
 module.exports = router
