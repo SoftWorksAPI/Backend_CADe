@@ -42,6 +42,34 @@ const swaggerOptions = {
 const swaggerSpec = swaggerJsdoc(swaggerOptions)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
+// Logging de requisições
+app.use((req, res, next) => {
+  const start = Date.now()
+  const originalEnd = res.end
+
+  res.end = function (...args) {
+    const duration = Date.now() - start
+    const status = res.statusCode
+    const method = req.method
+    const url = req.originalUrl
+
+    // Cores ANSI
+    const reset = '\x1b[0m'
+    const bold = '\x1b[1m'
+    let color
+    if (status < 300) color = '\x1b[32m'       // verde
+    else if (status < 400) color = '\x1b[36m'   // ciano
+    else if (status < 500) color = '\x1b[33m'   // amarelo
+    else color = '\x1b[31m'                      // vermelho
+
+    console.log(`${color}${bold}${method}${reset} ${url} → ${color}${status}${reset} (${duration}ms)`)
+
+    originalEnd.apply(res, args)
+  }
+
+  next()
+})
+
 // Servir arquivos estáticos da pasta /uploads
 app.use('/uploads', express.static('uploads'))
 
@@ -67,6 +95,13 @@ app.use('/system', systemRoutes)
 app.get('/', (req, res) => {
     res.json({ message: 'Hello, World!' });
 });
+
+// Handler de erros não tratados
+app.use((err, req, res, next) => {
+  console.error(`\x1b[31m[ERRO] ${req.method} ${req.originalUrl}: ${err.message}\x1b[0m`)
+  console.error(err.stack)
+  res.status(500).json({ message: 'Erro interno do servidor' })
+})
 
 // sincroniza os models com o banco ao subir (com retry)
 async function connectDatabase() {

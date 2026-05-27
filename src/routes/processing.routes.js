@@ -44,7 +44,7 @@ router.post('/:fileId/process', authMiddleware, processingController.processFile
  *         required: false
  *         schema:
  *           type: integer
- *         description: Timeout em milissegundos (padrao 180000 = 3min)
+ *         description: Timeout em milissegundos (padrao 300000 = 5min)
  *     responses:
  *       200:
  *         description: PDF gerado com sucesso (binary)
@@ -72,7 +72,7 @@ router.post('/:fileId/relatorio/pdf', authMiddleware, processingController.gener
  *         required: false
  *         schema:
  *           type: integer
- *         description: Timeout em milissegundos (padrao 180000 = 3min)
+ *         description: Timeout em milissegundos (padrao 300000 = 5min)
  *     responses:
  *       200:
  *         description: Markdown gerado com sucesso (text)
@@ -100,7 +100,7 @@ router.post('/:fileId/relatorio/markdown', authMiddleware, processingController.
  *         required: false
  *         schema:
  *           type: integer
- *         description: Timeout em milissegundos (padrao 180000 = 3min)
+ *         description: Timeout em milissegundos (padrao 300000 = 5min)
  *     responses:
  *       200:
  *         description: XLSX gerado com sucesso (binary)

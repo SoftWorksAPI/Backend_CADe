@@ -185,7 +185,7 @@ async function generatePdfReport(req, res) {
     }
 
     // Chamar Python para gerar PDF via IA
-    const timeout = req.query.timeout ? parseInt(req.query.timeout, 10) : 180000
+    const timeout = req.query.timeout ? parseInt(req.query.timeout, 10) : 300000
     const { report: pdfBuffer, review: reviewPdf } = await pythonClient.generatePdf(jsonTratado, jsonCru, file.originalName, timeout)
 
     // Salvar em uploads/reports/
@@ -243,7 +243,7 @@ async function generateXlsxReport(req, res) {
     }
 
     // Chamar Python para gerar XLSX via IA
-    const timeout = req.query.timeout ? parseInt(req.query.timeout, 10) : 180000
+    const timeout = req.query.timeout ? parseInt(req.query.timeout, 10) : 300000
     const { report: xlsxBuffer, review: reviewXlsx } = await pythonClient.generateXlsx(jsonTratado, jsonCru, file.originalName, timeout)
 
     // Salvar em uploads/reports/
@@ -301,7 +301,7 @@ async function generateMarkdownReport(req, res) {
     }
 
     // Chamar Python para gerar MD via IA
-    const timeout = req.query.timeout ? parseInt(req.query.timeout, 10) : 180000
+    const timeout = req.query.timeout ? parseInt(req.query.timeout, 10) : 300000
     const { report: mdBuffer, review: reviewMd } = await pythonClient.generateMarkdown(jsonTratado, jsonCru, file.originalName, timeout)
 
     // Salvar em uploads/reports/
