@@ -142,6 +142,30 @@ async function getNormFileById(req, res) {
   }
 }
 
+async function updateNormFile(req, res) {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Apenas administradores podem editar normas' })
+    }
+
+    const { id } = req.params
+    const { title, category } = req.body
+
+    if (!title && !category) {
+      return res.status(400).json({ message: 'Informe title ou category para atualizar' })
+    }
+
+    const result = await normFileService.updateNormFile(id, { title, category })
+    return res.status(200).json(result)
+  } catch (err) {
+    console.error('Erro ao atualizar norma:', err)
+    if (err.message === 'Arquivo não encontrado') {
+      return res.status(404).json({ message: err.message })
+    }
+    return res.status(500).json({ message: err.message })
+  }
+}
+
 async function toggleAtivoNormFile(req, res) {
   try {
     if (!req.user.isAdmin) {
@@ -181,6 +205,7 @@ module.exports = {
   listAllNormFiles,
   listNormFilesByUserId,
   getNormFileById,
+  updateNormFile,
   toggleAtivoNormFile,
   listarNormasAtivas,
 }

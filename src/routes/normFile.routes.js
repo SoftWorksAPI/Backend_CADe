@@ -163,11 +163,47 @@ router.get('/internal/ativas', internalAuthMiddleware, normFileController.listar
 
 /**
  * @openapi
+ * /norm-files/{id}:
+ *   patch:
+ *     tags: [NormFiles]
+ *     summary: Editar norma
+ *     description: Atualiza título e/ou categoria de uma norma. Apenas admin.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Norma atualizada com sucesso
+ *       400:
+ *         description: Nenhum campo para atualizar
+ *       403:
+ *         description: Apenas administradores podem editar normas
+ *       404:
+ *         description: Norma não encontrada
+ */
+router.patch('/:id', authMiddleware, normFileController.updateNormFile)
+
+/**
+ * @openapi
  * /norm-files/{id}/toggle-ativo:
  *   patch:
  *     tags: [NormFiles]
  *     summary: Ativar ou desativar norma
- *     description: Inverte o valor do campo ativo da norma
+ *     description: Inverte o valor do campo ativo da norma. Apenas admin.
  *     parameters:
  *       - in: path
  *         name: id
@@ -177,8 +213,10 @@ router.get('/internal/ativas', internalAuthMiddleware, normFileController.listar
  *     responses:
  *       200:
  *         description: Status da norma alterado com sucesso
+ *       403:
+ *         description: Apenas administradores podem alterar status de normas
  *       404:
- *         description: Norma nao encontrada
+ *         description: Norma não encontrada
  */
 router.patch('/:id/toggle-ativo', authMiddleware, normFileController.toggleAtivoNormFile)
 
