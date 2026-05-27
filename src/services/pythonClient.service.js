@@ -125,10 +125,49 @@ async function downloadReport(filename) {
   return Buffer.from(response.data)
 }
 
+/**
+ * Verificar se a IA (OpenRouter) esta online
+ * @returns {Promise<object>} Status da IA
+ */
+async function aiHealth() {
+  const response = await axios.get(`${PYTHON_API_URL}/v1/ai/health`, {
+    headers: { 'x-api-key': INTERNAL_API_KEY },
+    timeout: 30000,
+  })
+  return response.data
+}
+
+/**
+ * Verificar status do RAG (ChromaDB)
+ * @returns {Promise<object>} Status do banco vetorial
+ */
+async function ragHealth() {
+  const response = await axios.get(`${PYTHON_API_URL}/v1/rag/health`, {
+    headers: { 'x-api-key': INTERNAL_API_KEY },
+    timeout: 10000,
+  })
+  return response.data
+}
+
+/**
+ * Sincronizar normas ativas para o ChromaDB
+ * @returns {Promise<object>} Resultado da sincronizacao
+ */
+async function ragSync() {
+  const response = await axios.post(`${PYTHON_API_URL}/v1/rag/sync`, {}, {
+    headers: { 'x-api-key': INTERNAL_API_KEY },
+    timeout: 300000, // 5min — sync pode demorar
+  })
+  return response.data
+}
+
 module.exports = {
   callPipeline,
   generatePdf,
   generateMarkdown,
   generateXlsx,
   downloadReport,
+  aiHealth,
+  ragHealth,
+  ragSync,
 }
