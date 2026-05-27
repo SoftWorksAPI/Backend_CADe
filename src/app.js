@@ -56,11 +56,13 @@ const fileRoutes = require('./routes/file.routes')
 const normFileRoutes = require('./routes/normFile.routes')
 const reportRoutes = require('./routes/report.routes')
 const processingRoutes = require('./routes/processing.routes')
+const systemRoutes = require('./routes/system.routes')
 app.use('/users', userRoutes)
 app.use('/files', fileRoutes)
 app.use('/norm-files', normFileRoutes)
 app.use('/reports', reportRoutes)
 app.use('/processing', processingRoutes)
+app.use('/system', systemRoutes)
 
 app.get('/', (req, res) => {
     res.json({ message: 'Hello, World!' });
