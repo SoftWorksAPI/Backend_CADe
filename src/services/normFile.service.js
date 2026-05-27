@@ -3,7 +3,7 @@ const User = require('../models/user.model')
 const path = require('path')
 const fs = require('fs').promises
 
-const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.doc']
+const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.xlsx', '.xls']
 
 async function saveNormFileToFilesystem(fileBuffer, originalName) {
   const uploadsDir = path.join(__dirname, '../../uploads/norms')
