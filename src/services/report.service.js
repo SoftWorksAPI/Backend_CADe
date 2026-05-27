@@ -53,7 +53,7 @@ async function listReports({ fileId, userId, isAdmin }) {
 async function getReportById(id, userId, isAdmin) {
   const report = await Report.findByPk(id, {
     include: [
-      { model: File, attributes: ['id', 'originalName', 'filename', 'filePath'] },
+      { model: File, attributes: ['id', 'originalName', 'filename', 'filePath', 'userId'] },
       { model: User, attributes: ['id', 'name', 'email'] },
     ],
   })
@@ -62,10 +62,12 @@ async function getReportById(id, userId, isAdmin) {
     throw new Error('Relatório não encontrado')
   }
 
-  const reportUserIdNum = parseInt(report.userId, 10)
   const userIdNum = parseInt(userId, 10)
+  const reportUserIdNum = parseInt(report.userId, 10)
+  const fileUserIdNum = report.File ? parseInt(report.File.userId, 10) : null
 
-  if (reportUserIdNum !== userIdNum && !isAdmin) {
+  // Admin tem acesso total. Usuario comum: acesso se é dono do relatório OU dono do arquivo associado
+  if (!isAdmin && reportUserIdNum !== userIdNum && fileUserIdNum !== userIdNum) {
     throw new Error('Permissão negada')
   }
 
@@ -73,16 +75,19 @@ async function getReportById(id, userId, isAdmin) {
 }
 
 async function deleteReport(id, userId, isAdmin) {
-  const report = await Report.findByPk(id)
+  const report = await Report.findByPk(id, {
+    include: [{ model: File, attributes: ['id', 'userId'] }],
+  })
 
   if (!report) {
     throw new Error('Relatório não encontrado')
   }
 
-  const reportUserIdNum = parseInt(report.userId, 10)
   const userIdNum = parseInt(userId, 10)
+  const reportUserIdNum = parseInt(report.userId, 10)
+  const fileUserIdNum = report.File ? parseInt(report.File.userId, 10) : null
 
-  if (reportUserIdNum !== userIdNum && !isAdmin) {
+  if (!isAdmin && reportUserIdNum !== userIdNum && fileUserIdNum !== userIdNum) {
     throw new Error('Permissão negada')
   }
 
