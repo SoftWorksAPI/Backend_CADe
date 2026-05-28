@@ -161,6 +161,31 @@ async function ragSync() {
   return response.data
 }
 
+/**
+ * Enviar mensagem de chat para o Python backend
+ * @param {object} jsonCru - Dados brutos da extracao DXF (JSON)
+ * @param {object} jsonTratado - Memorial descritivo tratado pela IA (JSON)
+ * @param {string} pergunta - Pergunta do usuario
+ * @param {Array} historico - Historico de mensagens [{role, content}]
+ * @returns {Promise<object>} Resposta do chat Python
+ */
+async function chatMessage(jsonCru, jsonTratado, pergunta, historico = []) {
+  const response = await axios.post(`${PYTHON_API_URL}/v1/chat`, {
+    pergunta,
+    json_cru: jsonCru,
+    json_tratado: jsonTratado,
+    historico,
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': INTERNAL_API_KEY,
+    },
+    timeout: 120000, // 2 minutos
+  })
+
+  return response.data
+}
+
 module.exports = {
   callPipeline,
   generatePdf,
@@ -170,4 +195,5 @@ module.exports = {
   aiHealth,
   ragHealth,
   ragSync,
+  chatMessage,
 }

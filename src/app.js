@@ -85,12 +85,14 @@ const normFileRoutes = require('./routes/normFile.routes')
 const reportRoutes = require('./routes/report.routes')
 const processingRoutes = require('./routes/processing.routes')
 const systemRoutes = require('./routes/system.routes')
+const chatRoutes = require('./routes/chat.routes')
 app.use('/users', userRoutes)
 app.use('/files', fileRoutes)
 app.use('/norm-files', normFileRoutes)
 app.use('/reports', reportRoutes)
 app.use('/processing', processingRoutes)
 app.use('/system', systemRoutes)
+app.use('/chat', chatRoutes)
 
 app.get('/', (req, res) => {
     res.json({ message: 'Hello, World!' });
