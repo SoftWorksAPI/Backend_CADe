@@ -135,4 +135,25 @@ router.get('/:id', authMiddleware, reportController.getReportById)
  */
 router.delete('/:id', authMiddleware, reportController.deleteReport)
 
+/**
+ * @openapi
+ * /reports/{id}/download:
+ *   get:
+ *     tags: [Reports]
+ *     summary: Download de relatorio
+ *     description: Faz download do arquivo do relatorio
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Arquivo do relatorio
+ *       404:
+ *         description: Relatorio ou arquivo nao encontrado
+ */
+router.get('/:id/download', authMiddleware, reportController.downloadReport)
+
 module.exports = router

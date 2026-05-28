@@ -144,9 +144,63 @@ async function deleteReport(req, res) {
   }
 }
 
+async function downloadReport(req, res) {
+  try {
+    const { id } = req.params
+    const userId = req.user.id
+    const isAdmin = req.user.isAdmin
+
+    const report = await reportService.getReportById(id, userId, isAdmin)
+
+    if (!report.filePath) {
+      return res.status(404).json({ message: 'Arquivo não encontrado' })
+    }
+
+    const filename = path.basename(report.filePath)
+    const absPath = path.join(REPORTS_DIR, filename)
+
+    if (!fs.existsSync(absPath)) {
+      return res.status(404).json({ message: 'Arquivo não encontrado no disco' })
+    }
+
+    // Definir Content-Disposition como attachment para forçar download
+    const ext = path.extname(filename).toLowerCase()
+    const contentTypes = {
+      '.pdf': 'application/pdf',
+      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      '.md': 'text/markdown',
+      '.txt': 'text/plain',
+      '.json': 'application/json',
+    }
+
+    const contentType = contentTypes[ext] || 'application/octet-stream'
+    // Usar titulo do report + extensao correta
+    const baseName = (report.title || 'relatorio').replace(/[^a-zA-Z0-9_\- ]/g, '').trim()
+    const downloadName = `${baseName}${ext}`
+
+    res.setHeader('Content-Type', contentType)
+    res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`)
+    res.sendFile(absPath)
+  } catch (err) {
+    console.error('Erro ao baixar relatório:', err)
+
+    if (err.message === 'Relatório não encontrado') {
+      return res.status(404).json({ message: err.message })
+    }
+
+    if (err.message === 'Permissão negada') {
+      return res.status(403).json({ message: err.message })
+    }
+
+    return res.status(500).json({ message: err.message })
+  }
+}
+
 module.exports = {
   createReport,
   listReports,
   getReportById,
   deleteReport,
+  downloadReport,
 }

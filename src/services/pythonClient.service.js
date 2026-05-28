@@ -167,20 +167,22 @@ async function ragSync() {
  * @param {object} jsonTratado - Memorial descritivo tratado pela IA (JSON)
  * @param {string} pergunta - Pergunta do usuario
  * @param {Array} historico - Historico de mensagens [{role, content}]
+ * @param {Array} reports - Lista de reports do projeto [{title, filePath, fileType}]
  * @returns {Promise<object>} Resposta do chat Python
  */
-async function chatMessage(jsonCru, jsonTratado, pergunta, historico = []) {
+async function chatMessage(jsonCru, jsonTratado, pergunta, historico = [], reports = []) {
   const response = await axios.post(`${PYTHON_API_URL}/v1/chat`, {
     pergunta,
     json_cru: jsonCru,
     json_tratado: jsonTratado,
     historico,
+    reports,
   }, {
     headers: {
       'Content-Type': 'application/json',
       'x-api-key': INTERNAL_API_KEY,
     },
-    timeout: 120000, // 2 minutos
+    timeout: 180000, // 3 minutos
   })
 
   return response.data

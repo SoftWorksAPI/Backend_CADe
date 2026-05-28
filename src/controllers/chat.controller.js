@@ -8,7 +8,6 @@ const REPORTS_DIR = path.join(__dirname, '../../uploads/reports')
 
 /**
  * Helper: buscar jsons do disco para um fileId
- * Mesmo pattern de processing.controller.js
  */
 async function _getJsonsFromDisk(fileId) {
   const jsonReports = await Report.findAll({
@@ -71,12 +70,34 @@ async function sendMessage(req, res) {
       })
     }
 
+    // Buscar TODOS os reports do projeto (nao so JSONs)
+    const allReports = await Report.findAll({
+      where: { fileId: parseInt(fileId, 10) },
+      order: [['createdAt', 'DESC']],
+    })
+
+    const reportsParaChat = allReports
+      .filter(r => r.filePath)
+      .map(r => {
+        // Converter caminho de URL para caminho de filesystem
+        const filename = path.basename(r.filePath)
+        const absPath = path.join(REPORTS_DIR, filename)
+        const exists = fs.existsSync(absPath)
+        console.log(`[CHAT] Report: ${r.title} | fileType: ${r.fileType} | filePath: ${r.filePath} | absPath: ${absPath} | exists: ${exists}`)
+        return {
+          title: r.title,
+          filePath: exists ? absPath : r.filePath,
+          fileType: r.fileType || '',
+        }
+      })
+
     // Chamar Python
     const response = await pythonClient.chatMessage(
       jsonCru,
       jsonTratado,
       pergunta,
-      historico || []
+      historico || [],
+      reportsParaChat
     )
 
     return res.status(200).json(response)
