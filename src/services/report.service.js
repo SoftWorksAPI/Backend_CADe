@@ -65,7 +65,7 @@ async function listReports({ fileId, userId, isAdmin, page = 1, limit = 20 }) {
 async function getReportById(id, userId, isAdmin) {
   const report = await Report.findByPk(id, {
     include: [
-      { model: File, attributes: ['id', 'originalName', 'filename', 'filePath', 'userId'] },
+      { model: File, attributes: ['id', 'title', 'originalName', 'filename', 'filePath', 'userId'] },
       { model: User, attributes: ['id', 'name', 'email'] },
     ],
   })
