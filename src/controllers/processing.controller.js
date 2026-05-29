@@ -36,7 +36,11 @@ async function processFile(req, res) {
       return res.status(403).json({ message: 'Permissao negada' })
     }
 
-    // 3. Garantir que a pasta uploads/reports existe
+    // 3. Marcar como processando
+    file.processingStatus = 'processando'
+    await file.save()
+
+    // 4. Garantir que a pasta uploads/reports existe
     fs.mkdirSync(REPORTS_DIR, { recursive: true })
 
     const fileIntId = parseInt(fileId, 10)
@@ -57,6 +61,7 @@ async function processFile(req, res) {
 
     if (!resultado.sucesso) {
       console.log(`[NODE] ERRO na extracao: ${resultado.erro}`)
+      try { file.processingStatus = 'erro'; await file.save() } catch (_) {}
       return res.status(422).json({ message: resultado.erro || 'Erro na extracao do DXF' })
     }
 
@@ -98,9 +103,10 @@ async function processFile(req, res) {
       status: 'concluido',
     })
 
-    // Atualizar markdownContent no File com o JSON tratado (memorial)
+    // Atualizar markdownContent e status no File
     try {
       file.markdownContent = JSON.stringify(memorialDescritivo, null, 2)
+      file.processingStatus = 'concluido'
       await file.save()
     } catch (err) {
       console.warn('Aviso: nao foi possivel atualizar markdownContent:', err.message)
@@ -122,6 +128,10 @@ async function processFile(req, res) {
   } catch (err) {
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
     console.error(`[NODE] ERRO apos ${elapsed}s:`, err.message)
+    try {
+      const file = await File.findByPk(req.params.fileId)
+      if (file) { file.processingStatus = 'erro'; await file.save() }
+    } catch (_) {}
     return res.status(500).json({ message: err.message })
   }
 }
@@ -176,9 +186,14 @@ async function generatePdfReport(req, res) {
       return res.status(403).json({ message: 'Permissao negada' })
     }
 
+    // Marcar como gerando
+    file.processingStatus = 'gerando'
+    await file.save()
+
     // Buscar JSONs do disco
     const { jsonCru, jsonTratado } = await _getJsonsFromDisk(fileId)
     if (!jsonCru || !jsonTratado) {
+      try { file.processingStatus = 'erro'; await file.save() } catch (_) {}
       return res.status(404).json({
         message: 'JSONs de extracao nao encontrados. Execute a pipeline principal primeiro via POST /processing/:fileId/process',
       })
@@ -206,11 +221,15 @@ async function generatePdfReport(req, res) {
       review: reviewPdf || null,
     })
 
+    file.processingStatus = 'concluido'
+    await file.save()
+
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `attachment; filename="${file.originalName.replace('.dxf', '')}_memorial.pdf"`)
     return res.send(pdfBuffer)
   } catch (err) {
     console.error('Erro ao gerar PDF:', err)
+    try { const f = await File.findByPk(req.params.fileId); if (f) { f.processingStatus = 'erro'; await f.save() } } catch (_) {}
     return res.status(500).json({ message: err.message })
   }
 }
@@ -234,9 +253,14 @@ async function generateXlsxReport(req, res) {
       return res.status(403).json({ message: 'Permissao negada' })
     }
 
+    // Marcar como gerando
+    file.processingStatus = 'gerando'
+    await file.save()
+
     // Buscar JSONs do disco
     const { jsonCru, jsonTratado } = await _getJsonsFromDisk(fileId)
     if (!jsonCru || !jsonTratado) {
+      try { file.processingStatus = 'erro'; await file.save() } catch (_) {}
       return res.status(404).json({
         message: 'JSONs de extracao nao encontrados. Execute a pipeline principal primeiro via POST /processing/:fileId/process',
       })
@@ -264,11 +288,15 @@ async function generateXlsxReport(req, res) {
       review: reviewXlsx || null,
     })
 
+    file.processingStatus = 'concluido'
+    await file.save()
+
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     res.setHeader('Content-Disposition', `attachment; filename="${file.originalName.replace('.dxf', '')}_memorial.xlsx"`)
     return res.send(xlsxBuffer)
   } catch (err) {
     console.error('Erro ao gerar XLSX:', err)
+    try { const f = await File.findByPk(req.params.fileId); if (f) { f.processingStatus = 'erro'; await f.save() } } catch (_) {}
     return res.status(500).json({ message: err.message })
   }
 }
@@ -292,9 +320,14 @@ async function generateMarkdownReport(req, res) {
       return res.status(403).json({ message: 'Permissao negada' })
     }
 
+    // Marcar como gerando
+    file.processingStatus = 'gerando'
+    await file.save()
+
     // Buscar JSONs do disco
     const { jsonCru, jsonTratado } = await _getJsonsFromDisk(fileId)
     if (!jsonCru || !jsonTratado) {
+      try { file.processingStatus = 'erro'; await file.save() } catch (_) {}
       return res.status(404).json({
         message: 'JSONs de extracao nao encontrados. Execute a pipeline principal primeiro via POST /processing/:fileId/process',
       })
@@ -322,11 +355,15 @@ async function generateMarkdownReport(req, res) {
       review: reviewMd || null,
     })
 
+    file.processingStatus = 'concluido'
+    await file.save()
+
     res.setHeader('Content-Type', 'text/markdown; charset=utf-8')
     res.setHeader('Content-Disposition', `attachment; filename="${file.originalName.replace('.dxf', '')}_memorial.md"`)
     return res.send(mdBuffer)
   } catch (err) {
     console.error('Erro ao gerar Markdown:', err)
+    try { const f = await File.findByPk(req.params.fileId); if (f) { f.processingStatus = 'erro'; await f.save() } } catch (_) {}
     return res.status(500).json({ message: err.message })
   }
 }

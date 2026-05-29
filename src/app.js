@@ -115,6 +115,7 @@ async function connectDatabase() {
       await sequelize.sync({ alter: true })
       console.log('Models sincronizados')
       await Startup.initializeAdminUser()
+      await Startup.resetStaleProcessingStatus()
       return
     } catch (error) {
       console.error(`Erro ao conectar ao banco: ${error.message}. Tentando novamente em ${delay / 1000}s...`)

@@ -42,6 +42,12 @@ const File = sequelize.define('File', {
     allowNull: true,
     comment: 'Conteúdo do arquivo markdown gerado',
   },
+  processingStatus: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'idle',
+    comment: 'Status: idle, processando, gerando, concluido, erro',
+  },
 }, {
   tableName: 'files',
   timestamps: true,
