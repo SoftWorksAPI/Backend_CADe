@@ -171,6 +171,7 @@ async function _getJsonsFromDisk(fileId) {
  * Gerar relatorio PDF via IA para um arquivo ja processado
  */
 async function generatePdfReport(req, res) {
+  let pendingReport = null
   try {
     const { fileId } = req.params
     const userId = req.user.id
@@ -186,18 +187,22 @@ async function generatePdfReport(req, res) {
       return res.status(403).json({ message: 'Permissao negada' })
     }
 
-    // Marcar como gerando
-    file.processingStatus = 'gerando'
-    await file.save()
-
     // Buscar JSONs do disco
     const { jsonCru, jsonTratado } = await _getJsonsFromDisk(fileId)
     if (!jsonCru || !jsonTratado) {
-      try { file.processingStatus = 'erro'; await file.save() } catch (_) {}
       return res.status(404).json({
         message: 'JSONs de extracao nao encontrados. Execute a pipeline principal primeiro via POST /processing/:fileId/process',
       })
     }
+
+    // Criar Report com status 'gerando' ANTES de chamar Python
+    const pendingReport = await reportService.createReport({
+      title: `Memorial PDF - ${file.originalName}`,
+      fileId: parseInt(fileId, 10),
+      userId: requestUserId,
+      fileType: 'pdf',
+      status: 'gerando',
+    })
 
     // Chamar Python para gerar PDF via IA
     const timeout = req.query.timeout ? parseInt(req.query.timeout, 10) : 300000
@@ -210,26 +215,20 @@ async function generatePdfReport(req, res) {
     const pdfPath = path.join(REPORTS_DIR, `${baseName}_memorial.pdf`)
     fs.writeFileSync(pdfPath, pdfBuffer)
 
-    // Criar Report no BD
-    await reportService.createReport({
-      title: `Memorial PDF - ${file.originalName}`,
-      fileId: parseInt(fileId, 10),
-      userId: requestUserId,
+    // Atualizar Report para 'concluido'
+    await reportService.updateReport(pendingReport.id, {
       filePath: `/uploads/reports/${baseName}_memorial.pdf`,
-      fileType: 'pdf',
       status: 'concluido',
       review: reviewPdf || null,
     })
-
-    file.processingStatus = 'concluido'
-    await file.save()
 
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `attachment; filename="${file.originalName.replace('.dxf', '')}_memorial.pdf"`)
     return res.send(pdfBuffer)
   } catch (err) {
     console.error('Erro ao gerar PDF:', err)
-    try { const f = await File.findByPk(req.params.fileId); if (f) { f.processingStatus = 'erro'; await f.save() } } catch (_) {}
+    // Marcar Report como erro se foi criado
+    try { if (pendingReport) await reportService.updateReport(pendingReport.id, { status: 'erro' }) } catch (_) {}
     return res.status(500).json({ message: err.message })
   }
 }
@@ -238,6 +237,7 @@ async function generatePdfReport(req, res) {
  * Gerar relatorio XLSX via IA para um arquivo ja processado
  */
 async function generateXlsxReport(req, res) {
+  let pendingReport = null
   try {
     const { fileId } = req.params
     const userId = req.user.id
@@ -253,18 +253,22 @@ async function generateXlsxReport(req, res) {
       return res.status(403).json({ message: 'Permissao negada' })
     }
 
-    // Marcar como gerando
-    file.processingStatus = 'gerando'
-    await file.save()
-
     // Buscar JSONs do disco
     const { jsonCru, jsonTratado } = await _getJsonsFromDisk(fileId)
     if (!jsonCru || !jsonTratado) {
-      try { file.processingStatus = 'erro'; await file.save() } catch (_) {}
       return res.status(404).json({
         message: 'JSONs de extracao nao encontrados. Execute a pipeline principal primeiro via POST /processing/:fileId/process',
       })
     }
+
+    // Criar Report com status 'gerando' ANTES de chamar Python
+    pendingReport = await reportService.createReport({
+      title: `Memorial XLSX - ${file.originalName}`,
+      fileId: parseInt(fileId, 10),
+      userId: requestUserId,
+      fileType: 'xlsx',
+      status: 'gerando',
+    })
 
     // Chamar Python para gerar XLSX via IA
     const timeout = req.query.timeout ? parseInt(req.query.timeout, 10) : 300000
@@ -277,26 +281,19 @@ async function generateXlsxReport(req, res) {
     const xlsxPath = path.join(REPORTS_DIR, `${baseName}_memorial.xlsx`)
     fs.writeFileSync(xlsxPath, xlsxBuffer)
 
-    // Criar Report no BD
-    await reportService.createReport({
-      title: `Memorial XLSX - ${file.originalName}`,
-      fileId: parseInt(fileId, 10),
-      userId: requestUserId,
+    // Atualizar Report para 'concluido'
+    await reportService.updateReport(pendingReport.id, {
       filePath: `/uploads/reports/${baseName}_memorial.xlsx`,
-      fileType: 'xlsx',
       status: 'concluido',
       review: reviewXlsx || null,
     })
-
-    file.processingStatus = 'concluido'
-    await file.save()
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     res.setHeader('Content-Disposition', `attachment; filename="${file.originalName.replace('.dxf', '')}_memorial.xlsx"`)
     return res.send(xlsxBuffer)
   } catch (err) {
     console.error('Erro ao gerar XLSX:', err)
-    try { const f = await File.findByPk(req.params.fileId); if (f) { f.processingStatus = 'erro'; await f.save() } } catch (_) {}
+    try { if (pendingReport) await reportService.updateReport(pendingReport.id, { status: 'erro' }) } catch (_) {}
     return res.status(500).json({ message: err.message })
   }
 }
@@ -305,6 +302,7 @@ async function generateXlsxReport(req, res) {
  * Gerar relatorio Markdown via IA para um arquivo ja processado
  */
 async function generateMarkdownReport(req, res) {
+  let pendingReport = null
   try {
     const { fileId } = req.params
     const userId = req.user.id
@@ -320,18 +318,22 @@ async function generateMarkdownReport(req, res) {
       return res.status(403).json({ message: 'Permissao negada' })
     }
 
-    // Marcar como gerando
-    file.processingStatus = 'gerando'
-    await file.save()
-
     // Buscar JSONs do disco
     const { jsonCru, jsonTratado } = await _getJsonsFromDisk(fileId)
     if (!jsonCru || !jsonTratado) {
-      try { file.processingStatus = 'erro'; await file.save() } catch (_) {}
       return res.status(404).json({
         message: 'JSONs de extracao nao encontrados. Execute a pipeline principal primeiro via POST /processing/:fileId/process',
       })
     }
+
+    // Criar Report com status 'gerando' ANTES de chamar Python
+    pendingReport = await reportService.createReport({
+      title: `Memorial Markdown - ${file.originalName}`,
+      fileId: parseInt(fileId, 10),
+      userId: requestUserId,
+      fileType: 'md',
+      status: 'gerando',
+    })
 
     // Chamar Python para gerar MD via IA
     const timeout = req.query.timeout ? parseInt(req.query.timeout, 10) : 300000
@@ -344,26 +346,19 @@ async function generateMarkdownReport(req, res) {
     const mdPath = path.join(REPORTS_DIR, `${baseName}_memorial.md`)
     fs.writeFileSync(mdPath, mdBuffer)
 
-    // Criar Report no BD
-    await reportService.createReport({
-      title: `Memorial Markdown - ${file.originalName}`,
-      fileId: parseInt(fileId, 10),
-      userId: requestUserId,
+    // Atualizar Report para 'concluido'
+    await reportService.updateReport(pendingReport.id, {
       filePath: `/uploads/reports/${baseName}_memorial.md`,
-      fileType: 'md',
       status: 'concluido',
       review: reviewMd || null,
     })
-
-    file.processingStatus = 'concluido'
-    await file.save()
 
     res.setHeader('Content-Type', 'text/markdown; charset=utf-8')
     res.setHeader('Content-Disposition', `attachment; filename="${file.originalName.replace('.dxf', '')}_memorial.md"`)
     return res.send(mdBuffer)
   } catch (err) {
     console.error('Erro ao gerar Markdown:', err)
-    try { const f = await File.findByPk(req.params.fileId); if (f) { f.processingStatus = 'erro'; await f.save() } } catch (_) {}
+    try { if (pendingReport) await reportService.updateReport(pendingReport.id, { status: 'erro' }) } catch (_) {}
     return res.status(500).json({ message: err.message })
   }
 }

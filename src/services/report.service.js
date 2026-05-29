@@ -74,6 +74,12 @@ async function getReportById(id, userId, isAdmin) {
   return report
 }
 
+async function updateReport(id, data) {
+  const report = await Report.findByPk(id)
+  if (!report) throw new Error('Relatório não encontrado')
+  return await report.update(data)
+}
+
 async function deleteReport(id, userId, isAdmin) {
   const report = await Report.findByPk(id, {
     include: [{ model: File, attributes: ['id', 'userId'] }],
@@ -110,6 +116,7 @@ async function deleteReport(id, userId, isAdmin) {
 
 module.exports = {
   createReport,
+  updateReport,
   listReports,
   getReportById,
   deleteReport,
