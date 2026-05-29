@@ -23,7 +23,7 @@ async function pipelineCallback(req, res) {
       memorial_descritivo,
       dados_extracao,
       confianca,
-      num_inconsistencias,
+      num_inconsistencias: numInconsistencias,
       erro,
     } = req.body
 
