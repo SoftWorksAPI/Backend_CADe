@@ -37,6 +37,7 @@ async function saveFileToFilesystem(fileBuffer, originalName) {
 async function saveFileMetadataToDatabase(fileData, userId) {
   try {
     const file = await File.create({
+      title: fileData.title || null,
       originalName: fileData.originalName,
       filename: fileData.filename,
       filePath: fileData.filePath,
@@ -62,6 +63,7 @@ async function uploadFile(file, fileData, userId) {
     // Salvar metadados no banco
     const fileRecord = await saveFileMetadataToDatabase(
       {
+        title: fileData.title,
         originalName: file.originalname,
         filename: savedFile.filename,
         filePath: savedFile.filePath,
@@ -73,6 +75,7 @@ async function uploadFile(file, fileData, userId) {
 
     return {
       id: fileRecord.id,
+      title: fileRecord.title,
       originalName: fileRecord.originalName,
       filename: fileRecord.filename,
       fileSize: fileRecord.fileSize,

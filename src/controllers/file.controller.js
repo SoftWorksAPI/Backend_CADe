@@ -27,9 +27,14 @@ async function uploadFile(req, res) {
     // Validar antes de enviar ao service
     validateDXFFile(req.file);
 
+    if (!req.body.title || !req.body.title.trim()) {
+      return res.status(400).json({ message: 'O titulo do projeto e obrigatorio' });
+    }
+
     const result = await fileService.uploadFile(
       req.file,
       {
+        title: req.body.title,
         description: req.body.description,
       },
       req.user.id
