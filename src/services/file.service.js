@@ -251,6 +251,55 @@ async function getFileById(fileId, userId, isAdmin) {
 }
 
 /**
+ * Substituir arquivo DXF de um projeto existente
+ */
+async function replaceFile(fileId, newFileBuffer, newOriginalName, newFileSize, userId, isAdmin) {
+  try {
+    const file = await File.findByPk(fileId);
+
+    if (!file) {
+      throw new Error('Arquivo não encontrado');
+    }
+
+    const fileUserIdNum = parseInt(file.userId, 10);
+    const userIdNum = parseInt(userId, 10);
+
+    if (fileUserIdNum !== userIdNum && !isAdmin) {
+      throw new Error('Permissão negada');
+    }
+
+    // Validar extensao .dxf
+    if (!newOriginalName.toLowerCase().endsWith('.dxf')) {
+      throw new Error('Apenas arquivos .dxf são aceitos');
+    }
+
+    // Salvar novo arquivo no filesystem
+    const savedFile = await saveFileToFilesystem(newFileBuffer, newOriginalName);
+
+    // Deletar arquivo antigo do disco
+    const oldFilePath = path.join(__dirname, '../../uploads', file.filename);
+    try {
+      await fs.unlink(oldFilePath);
+    } catch (err) {
+      console.warn('Aviso: arquivo antigo não encontrado:', oldFilePath);
+    }
+
+    // Atualizar registro no banco
+    file.originalName = newOriginalName;
+    file.filename = savedFile.filename;
+    file.filePath = savedFile.filePath;
+    file.fileSize = newFileSize;
+    file.processingStatus = 'idle';
+    file.markdownContent = null;
+    await file.save();
+
+    return file;
+  } catch (err) {
+    throw err;
+  }
+}
+
+/**
  * Adicionar conteúdo markdown a um arquivo
  */
 async function addMarkdownToFile(fileId, userId, isAdmin, markdownContent) {
@@ -294,6 +343,7 @@ module.exports = {
   saveFileToFilesystem,
   saveFileMetadataToDatabase,
   uploadFile,
+  replaceFile,
   deleteFile,
   listAllFiles,
   listFilesByUserId,

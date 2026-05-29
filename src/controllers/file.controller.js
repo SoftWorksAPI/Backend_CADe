@@ -46,6 +46,61 @@ async function uploadFile(req, res) {
 }
 
 /**
+ * Substituir arquivo DXF de um projeto existente
+ */
+async function replaceFile(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'Nenhum arquivo enviado' });
+    }
+
+    // Validar extensão .dxf
+    const originalName = req.file.originalname;
+    if (!originalName.toLowerCase().endsWith('.dxf')) {
+      return res.status(400).json({ message: 'Apenas arquivos .dxf são aceitos' });
+    }
+
+    const result = await fileService.replaceFile(
+      id,
+      req.file.buffer,
+      originalName,
+      req.file.size,
+      req.user.id,
+      req.user.isAdmin
+    );
+
+    return res.status(200).json({
+      message: 'Arquivo substituído com sucesso',
+      file: {
+        id: result.id,
+        originalName: result.originalName,
+        filename: result.filename,
+        fileSize: result.fileSize,
+        processingStatus: result.processingStatus,
+      },
+    });
+  } catch (err) {
+    console.error('Erro ao substituir arquivo:', err);
+
+    if (err.message === 'Arquivo não encontrado') {
+      return res.status(404).json({ message: err.message });
+    }
+
+    if (err.message === 'Permissão negada') {
+      return res.status(403).json({ message: err.message });
+    }
+
+    if (err.message === 'Apenas arquivos .dxf são aceitos') {
+      return res.status(400).json({ message: err.message });
+    }
+
+    return res.status(500).json({ message: err.message });
+  }
+}
+
+/**
  * Deletar arquivo por ID
  */
 async function deleteFile(req, res) {
@@ -190,6 +245,7 @@ async function addMarkdown(req, res) {
 module.exports = {
   validateDXFFile,
   uploadFile,
+  replaceFile,
   deleteFile,
   listAllFiles,
   listFilesByUserId,
