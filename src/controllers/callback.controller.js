@@ -39,7 +39,7 @@ async function pipelineCallback(req, res) {
       console.log(`[CALLBACK] Pipeline falhou: ${erro}`)
       file.processingStatus = 'erro'
       await file.save()
-      sseService.broadcast('file-updated', { fileId: file_id, status: 'erro', erro })
+      sseService.broadcast('file-updated', { fileId: file_id, userId: file.userId, name: file.originalName, status: 'erro', erro })
       return res.status(200).json({ ok: true })
     }
 
@@ -84,7 +84,7 @@ async function pipelineCallback(req, res) {
     console.log(`[CALLBACK] Pipeline concluido para file_id=${file_id}`)
 
     // Notificar frontend via SSE
-    sseService.broadcast('file-updated', { fileId: file_id, status: 'concluido' })
+    sseService.broadcast('file-updated', { fileId: file_id, userId: file.userId, name: file.originalName, status: 'concluido' })
 
     return res.status(200).json({ ok: true })
   } catch (err) {
@@ -93,7 +93,7 @@ async function pipelineCallback(req, res) {
     try {
       const file = await File.findByPk(req.body.file_id)
       if (file) { file.processingStatus = 'erro'; await file.save() }
-      sseService.broadcast('file-updated', { fileId: req.body.file_id, status: 'erro' })
+      sseService.broadcast('file-updated', { fileId: req.body.file_id, userId: file?.userId, name: file?.originalName, status: 'erro' })
     } catch (_) {}
     return res.status(500).json({ message: err.message })
   }
@@ -118,7 +118,7 @@ async function reportCallback(req, res) {
     if (!sucesso) {
       console.log(`[CALLBACK] Report falhou: ${erro}`)
       await reportService.updateReport(report_id, { status: 'erro' })
-      sseService.broadcast('report-updated', { reportId: report_id, fileId: report.fileId, status: 'erro' })
+      sseService.broadcast('report-updated', { reportId: report_id, fileId: report.fileId, userId: report.userId, name: report.title, status: 'erro' })
       return res.status(200).json({ ok: true })
     }
 
@@ -143,7 +143,7 @@ async function reportCallback(req, res) {
     console.log(`[CALLBACK] Report ${report_id} concluido`)
 
     // Notificar frontend via SSE
-    sseService.broadcast('report-updated', { reportId: report_id, fileId: report.fileId, status: 'concluido' })
+    sseService.broadcast('report-updated', { reportId: report_id, fileId: report.fileId, userId: report.userId, name: report.title, status: 'concluido' })
 
     return res.status(200).json({ ok: true })
   } catch (err) {
@@ -152,7 +152,7 @@ async function reportCallback(req, res) {
       await reportService.updateReport(req.body.report_id, { status: 'erro' })
       const report = await Report.findByPk(req.body.report_id)
       if (report) {
-        sseService.broadcast('report-updated', { reportId: req.body.report_id, fileId: report.fileId, status: 'erro' })
+        sseService.broadcast('report-updated', { reportId: req.body.report_id, fileId: report.fileId, userId: report.userId, name: report.title, status: 'erro' })
       }
     } catch (_) {}
     return res.status(500).json({ message: err.message })

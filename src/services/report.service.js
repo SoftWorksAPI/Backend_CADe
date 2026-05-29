@@ -92,6 +92,28 @@ async function updateReport(id, data) {
   return await report.update(data)
 }
 
+async function updateReportTitle(id, title, userId, isAdmin) {
+  const report = await Report.findByPk(id, {
+    include: [{ model: File, attributes: ['id', 'userId'] }],
+  })
+
+  if (!report) {
+    throw new Error('Relatório não encontrado')
+  }
+
+  const userIdNum = parseInt(userId, 10)
+  const reportUserIdNum = parseInt(report.userId, 10)
+  const fileUserIdNum = report.File ? parseInt(report.File.userId, 10) : null
+
+  if (!isAdmin && reportUserIdNum !== userIdNum && fileUserIdNum !== userIdNum) {
+    throw new Error('Permissão negada')
+  }
+
+  report.title = title
+  await report.save()
+  return report
+}
+
 async function deleteReport(id, userId, isAdmin) {
   const report = await Report.findByPk(id, {
     include: [{ model: File, attributes: ['id', 'userId'] }],
@@ -129,6 +151,7 @@ async function deleteReport(id, userId, isAdmin) {
 module.exports = {
   createReport,
   updateReport,
+  updateReportTitle,
   listReports,
   getReportById,
   deleteReport,

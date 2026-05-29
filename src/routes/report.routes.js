@@ -133,6 +133,7 @@ router.get('/:id', authMiddleware, reportController.getReportById)
  *       403:
  *         description: Permissao negada
  */
+router.patch('/:id/title', authMiddleware, reportController.updateReportTitle)
 router.delete('/:id', authMiddleware, reportController.deleteReport)
 
 /**

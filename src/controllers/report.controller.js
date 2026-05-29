@@ -126,6 +126,35 @@ async function getReportById(req, res) {
   }
 }
 
+async function updateReportTitle(req, res) {
+  try {
+    const { id } = req.params
+    const { title } = req.body
+    const userId = req.user.id
+    const isAdmin = req.user.isAdmin
+
+    if (!title || !title.trim()) {
+      return res.status(400).json({ message: 'Título é obrigatório' })
+    }
+
+    const report = await reportService.updateReportTitle(id, title.trim(), userId, isAdmin)
+
+    return res.status(200).json({ message: 'Título atualizado com sucesso', report })
+  } catch (err) {
+    console.error('Erro ao atualizar título:', err)
+
+    if (err.message === 'Relatório não encontrado') {
+      return res.status(404).json({ message: err.message })
+    }
+
+    if (err.message === 'Permissão negada') {
+      return res.status(403).json({ message: err.message })
+    }
+
+    return res.status(500).json({ message: err.message })
+  }
+}
+
 async function deleteReport(req, res) {
   try {
     const { id } = req.params
@@ -207,6 +236,7 @@ module.exports = {
   createReport,
   listReports,
   getReportById,
+  updateReportTitle,
   deleteReport,
   downloadReport,
 }
