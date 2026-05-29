@@ -43,7 +43,7 @@ async function listReports({ fileId, userId, isAdmin, page = 1, limit = 20 }) {
   const { count, rows } = await Report.findAndCountAll({
     where,
     include: [
-      { model: File, attributes: ['id', 'originalName', 'filename', 'userId'], required: !isAdmin && !!userId },
+      { model: File, attributes: ['id', 'title', 'originalName', 'filename', 'userId'], required: !isAdmin && !!userId },
       { model: User, attributes: ['id', 'name', 'email'] },
     ],
     order: [['createdAt', 'DESC']],
