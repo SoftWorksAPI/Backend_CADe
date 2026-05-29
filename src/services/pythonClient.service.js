@@ -5,6 +5,7 @@ const FormData = require('form-data')
 
 const PYTHON_API_URL = process.env.PYTHON_API_URL || 'http://localhost:8000'
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'cade-internal-key-2026'
+const NODE_CALLBACK_URL = process.env.NODE_CALLBACK_URL || 'http://localhost:3000'
 
 /**
  * Chamar o pipeline completo de processamento DXF no Python
@@ -188,11 +189,61 @@ async function chatMessage(jsonCru, jsonTratado, pergunta, historico = [], repor
   return response.data
 }
 
+/**
+ * Chamar pipeline DXF em modo fire-and-forget (callback)
+ * @param {string} filePath - Caminho do arquivo DXF no disco
+ * @param {string} fileName - Nome original do arquivo
+ * @param {number} fileId - ID do arquivo no banco Node.js
+ */
+async function callPipelineAsync(filePath, fileName, fileId) {
+  const absolutePath = path.resolve(filePath.startsWith('/') ? filePath.slice(1) : filePath)
+  const form = new FormData()
+  form.append('file', fs.createReadStream(absolutePath), fileName)
+
+  await axios.post(`${PYTHON_API_URL}/v1/extract/dxf`, form, {
+    headers: {
+      ...form.getHeaders(),
+      'x-api-key': INTERNAL_API_KEY,
+      'X-Callback-URL': `${NODE_CALLBACK_URL}/callback/pipeline`,
+      'X-File-ID': String(fileId),
+    },
+    maxContentLength: Infinity,
+    maxBodyLength: Infinity,
+    timeout: 10000, // So para enviar, nao para processar
+  })
+}
+
+/**
+ * Gerar relatorio em modo fire-and-forget (callback)
+ * @param {'pdf'|'markdown'|'xlsx'} tipo - Tipo do relatorio
+ * @param {object} memorialDescritivo - Memorial descritivo
+ * @param {object} dadosExtracao - Dados de extracao
+ * @param {string} arquivoOriginal - Nome do arquivo original
+ * @param {number} reportId - ID do Report criado no Node
+ */
+async function generateReportAsync(tipo, memorialDescritivo, dadosExtracao, arquivoOriginal, reportId) {
+  await axios.post(`${PYTHON_API_URL}/v1/relatorios/${tipo}`, {
+    memorial_descritivo: memorialDescritivo,
+    dados_extracao: dadosExtracao,
+    arquivo_original: arquivoOriginal,
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': INTERNAL_API_KEY,
+      'X-Callback-URL': `${NODE_CALLBACK_URL}/callback/report`,
+      'X-Report-ID': String(reportId),
+    },
+    timeout: 10000, // So para enviar, nao para processar
+  })
+}
+
 module.exports = {
   callPipeline,
+  callPipelineAsync,
   generatePdf,
   generateMarkdown,
   generateXlsx,
+  generateReportAsync,
   downloadReport,
   aiHealth,
   ragHealth,
