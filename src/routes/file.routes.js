@@ -78,6 +78,9 @@ const upload = multer({
  */
 router.post('/upload', authMiddleware, upload.single('file'), fileController.uploadFile);
 
+// PATCH /files/:id/title — Atualizar titulo do projeto
+router.patch('/:id/title', authMiddleware, fileController.updateFileTitle);
+
 // PATCH /files/:id/replace — Substituir arquivo DXF de um projeto existente
 router.patch('/:id/replace', authMiddleware, upload.single('file'), fileController.replaceFile);
 

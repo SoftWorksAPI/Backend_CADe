@@ -242,6 +242,32 @@ async function addMarkdown(req, res) {
   }
 }
 
+/**
+ * Atualizar titulo do arquivo
+ */
+async function updateFileTitle(req, res) {
+  try {
+    const { id } = req.params;
+    const { title } = req.body;
+
+    const file = await fileService.updateFileTitle(id, title, req.user.id, req.user.isAdmin);
+
+    return res.status(200).json({ message: 'Titulo atualizado', file });
+  } catch (err) {
+    console.error('Erro ao atualizar titulo:', err);
+
+    if (err.message === 'Arquivo não encontrado') {
+      return res.status(404).json({ message: err.message });
+    }
+
+    if (err.message === 'Permissão negada') {
+      return res.status(403).json({ message: err.message });
+    }
+
+    return res.status(500).json({ message: err.message });
+  }
+}
+
 module.exports = {
   validateDXFFile,
   uploadFile,
@@ -251,4 +277,5 @@ module.exports = {
   listFilesByUserId,
   getFileById,
   addMarkdown,
+  updateFileTitle,
 };

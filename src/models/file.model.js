@@ -8,6 +8,10 @@ const File = sequelize.define('File', {
     autoIncrement: true,
     primaryKey: true,
   },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   originalName: {
     type: DataTypes.STRING,
     allowNull: false,

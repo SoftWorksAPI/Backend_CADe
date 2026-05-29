@@ -339,6 +339,29 @@ async function addMarkdownToFile(fileId, userId, isAdmin, markdownContent) {
   }
 }
 
+/**
+ * Atualizar titulo do arquivo
+ */
+async function updateFileTitle(fileId, title, userId, isAdmin) {
+  const file = await File.findByPk(fileId);
+
+  if (!file) {
+    throw new Error('Arquivo não encontrado');
+  }
+
+  const fileUserIdNum = parseInt(file.userId, 10);
+  const userIdNum = parseInt(userId, 10);
+
+  if (fileUserIdNum !== userIdNum && !isAdmin) {
+    throw new Error('Permissão negada');
+  }
+
+  file.title = title || null;
+  await file.save();
+
+  return file;
+}
+
 module.exports = {
   saveFileToFilesystem,
   saveFileMetadataToDatabase,
@@ -349,4 +372,5 @@ module.exports = {
   listFilesByUserId,
   getFileById,
   addMarkdownToFile,
+  updateFileTitle,
 };
