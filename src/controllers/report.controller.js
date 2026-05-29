@@ -83,13 +83,19 @@ async function createReport(req, res) {
 
 async function listReports(req, res) {
   try {
-    const { fileId } = req.query
+    const { fileId, page = 1, limit = 20 } = req.query
     const userId = req.user.id
     const isAdmin = req.user.isAdmin
 
-    const reports = await reportService.listReports({ fileId, userId, isAdmin })
+    const result = await reportService.listReports({
+      fileId,
+      userId,
+      isAdmin,
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+    })
 
-    return res.status(200).json({ reports })
+    return res.status(200).json(result)
   } catch (err) {
     console.error('Erro ao listar relatórios:', err)
     return res.status(500).json({ message: err.message })

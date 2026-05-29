@@ -22,7 +22,7 @@ async function createReport(data) {
   return report
 }
 
-async function listReports({ fileId, userId, isAdmin }) {
+async function listReports({ fileId, userId, isAdmin, page = 1, limit = 20 }) {
   const where = {}
 
   if (fileId) {
@@ -38,16 +38,28 @@ async function listReports({ fileId, userId, isAdmin }) {
     ]
   }
 
-  const reports = await Report.findAll({
+  const offset = (page - 1) * limit
+
+  const { count, rows } = await Report.findAndCountAll({
     where,
     include: [
       { model: File, attributes: ['id', 'originalName', 'filename', 'userId'], required: !isAdmin && !!userId },
       { model: User, attributes: ['id', 'name', 'email'] },
     ],
     order: [['createdAt', 'DESC']],
+    limit,
+    offset,
   })
 
-  return reports
+  return {
+    reports: rows,
+    pagination: {
+      total: count,
+      page,
+      limit,
+      pages: Math.ceil(count / limit),
+    },
+  }
 }
 
 async function getReportById(id, userId, isAdmin) {
