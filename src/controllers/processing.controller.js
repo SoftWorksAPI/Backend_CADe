@@ -154,7 +154,7 @@ async function generateXlsxReport(req, res) {
  * Gerar relatorio Markdown via IA para um arquivo ja processado
  */
 async function generateMarkdownReport(req, res) {
-  return _generateReportAsync(req, res, 'md', 'Memorial Markdown')
+  return _generateReportAsync(req, res, 'markdown', 'Memorial Markdown')
 }
 
 module.exports = {
