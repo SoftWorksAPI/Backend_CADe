@@ -78,6 +78,7 @@ require('./models/user.model')
 require('./models/file.model')
 require('./models/normFile.model')
 require('./models/report.model')
+require('./models/aiConfig.model')
 
 const userRoutes = require('./routes/user.routes')
 const fileRoutes = require('./routes/file.routes')
@@ -122,6 +123,7 @@ async function connectDatabase() {
       await sequelize.sync({ alter: true })
       console.log('Models sincronizados')
       await Startup.initializeAdminUser()
+      await Startup.initializeAIConfig()
       await Startup.resetStaleProcessingStatus()
       return
     } catch (error) {

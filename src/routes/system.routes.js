@@ -1,7 +1,9 @@
 const express = require('express')
 const router = express.Router()
 const authMiddleware = require('../middlewares/auth.middleware')
+const internalAuthMiddleware = require('../middlewares/internalAuth.middleware')
 const systemController = require('../controllers/system.controller')
+const aiConfigController = require('../controllers/aiConfig.controller')
 
 /**
  * Middleware que permite qualquer usuario autenticado
@@ -64,5 +66,64 @@ router.get('/rag/health', requireAuth, requireAdmin, systemController.ragHealth)
  *         description: Acesso negado
  */
 router.post('/rag/sync', requireAuth, requireAdmin, systemController.ragSync)
+
+/**
+ * @openapi
+ * /system/ai-config:
+ *   get:
+ *     tags: [System]
+ *     summary: Configuracao de IA (admin)
+ *     description: Retorna a configuracao atual de IA (provider, modelo, etc). API key mascarada. Apenas admin.
+ *     responses:
+ *       200:
+ *         description: Configuracao de IA
+ *       403:
+ *         description: Acesso negado
+ *   put:
+ *     tags: [System]
+ *     summary: Atualizar configuracao de IA (admin)
+ *     description: Atualiza provider, modelo, API key e base URL. Apenas admin.
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               provider:
+ *                 type: string
+ *                 enum: [openrouter, ollama]
+ *               model:
+ *                 type: string
+ *               apiKey:
+ *                 type: string
+ *               baseUrl:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Configuracao atualizada
+ *       400:
+ *         description: Dados invalidos
+ *       403:
+ *         description: Acesso negado
+ */
+router.post('/ai/test', requireAuth, requireAdmin, systemController.aiTest)
+router.post('/ai/test', requireAuth, requireAdmin, systemController.aiTest)
+router.get('/ai-config', requireAuth, requireAdmin, aiConfigController.getSettings)
+router.put('/ai-config', requireAuth, requireAdmin, aiConfigController.updateSettings)
+
+/**
+ * @openapi
+ * /system/ai-config/internal:
+ *   get:
+ *     tags: [System]
+ *     summary: Configuracao de IA (interno)
+ *     description: Retorna configuracao completa de IA para uso interno do Python backend. Protegido por x-api-key.
+ *     responses:
+ *       200:
+ *         description: Configuracao completa
+ *       403:
+ *         description: Acesso negado
+ */
+router.get('/ai-config/internal', internalAuthMiddleware, aiConfigController.getInternalConfig)
 
 module.exports = router
