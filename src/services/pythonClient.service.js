@@ -237,6 +237,29 @@ async function generateReportAsync(tipo, memorialDescritivo, dadosExtracao, arqu
   })
 }
 
+/**
+ * Enviar configuracao de IA atualizada para o Python backend
+ * @param {object} config - Config no formato do DB: { ai_provider, ai_model, ai_api_key, ai_base_url }
+ */
+async function pushAIConfig(config) {
+  try {
+    await axios.put(`${PYTHON_API_URL}/v1/ai/config`, config, {
+      headers: { 'x-api-key': INTERNAL_API_KEY },
+      timeout: 5000,
+    })
+  } catch (err) {
+    console.error('[NODE] Erro ao enviar AI config para Python:', err.message)
+  }
+}
+
+async function aiTest() {
+  const response = await axios.post(`${PYTHON_API_URL}/v1/ai/test`, {}, {
+    headers: { 'x-api-key': INTERNAL_API_KEY },
+    timeout: 60000,
+  })
+  return response.data
+}
+
 module.exports = {
   callPipeline,
   callPipelineAsync,
@@ -249,4 +272,6 @@ module.exports = {
   ragHealth,
   ragSync,
   chatMessage,
+  pushAIConfig,
+  aiTest,
 }

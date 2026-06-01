@@ -49,8 +49,22 @@ async function ragSync(req, res) {
   }
 }
 
+/**
+ * POST /system/ai/test — Testar conexao com o provider de IA (admin only)
+ */
+async function aiTest(req, res) {
+  try {
+    const response = await require('../services/pythonClient.service').aiTest()
+    return res.json(response)
+  } catch (err) {
+    console.error('Erro ao testar conexao IA:', err.message)
+    return res.json({ status: 'erro_conexao', erro: err.message })
+  }
+}
+
 module.exports = {
   aiHealth,
   ragHealth,
   ragSync,
+  aiTest,
 }

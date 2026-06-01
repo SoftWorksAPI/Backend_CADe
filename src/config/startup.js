@@ -24,6 +24,24 @@ class Startup {
             console.error('Erro ao criar admin:', error.message)
         }
     }
+    static async initializeAIConfig() {
+        try {
+            const SystemSetting = require('../models/aiConfig.model')
+            const defaults = [
+                { key: 'ai_provider', value: 'openrouter' },
+                { key: 'ai_model', value: 'openai/gpt-oss-120b:free' },
+                { key: 'ai_api_key', value: '' },
+                { key: 'ai_base_url', value: 'https://openrouter.ai/api/v1/chat/completions' },
+            ]
+            for (const { key, value } of defaults) {
+                await SystemSetting.findOrCreate({ where: { key }, defaults: { value } })
+            }
+            console.log('Config de IA inicializada')
+        } catch (error) {
+            console.error('Erro ao inicializar config de IA:', error.message)
+        }
+    }
+
     static async resetStaleProcessingStatus() {
         try {
             const File = require('../models/file.model')
